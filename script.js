@@ -18,7 +18,7 @@ $(document).ready(function() {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 let score = parseInt(scoreMatch[1]);
-                if (game.turn() === 'b') score = -score; // Adjust score for White's perspective
+                if (game.turn() === 'b') score = -score;
                 provideFeedback(score);
                 evaluationReady = false;
             }
@@ -36,12 +36,16 @@ $(document).ready(function() {
 
     stockfish.postMessage("uci");
 
-    // Click-to-move using jQuery
+    // Handle click-to-move using jQuery
     $('#chess-board').on('click', '.square-55d63', function() {
-        const square = $(this).data('square');
+        const square = $(this).attr('data-square');  // Retrieve the square using attr
+        console.log("Square clicked:", square);
+
+        if (!square) return; // Ensure we have a valid square
 
         if (selectedSquare) {
-            // Attempt to move to the clicked square
+            console.log("Trying to move from", selectedSquare, "to", square);
+
             const move = game.move({
                 from: selectedSquare,
                 to: square,
@@ -49,19 +53,22 @@ $(document).ready(function() {
             });
 
             if (move !== null) {
+                console.log("Move successful:", move);
                 board.position(game.fen());
-                selectedSquare = null;
+                selectedSquare = null;  // Reset selected square after move
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
             } else {
-                // Invalid move, deselect the square
+                console.log("Invalid move, deselecting square");
                 selectedSquare = null;
             }
         } else {
-            // Select the square if it contains a piece of the current player's color
             const piece = game.get(square);
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
+                console.log("Selected square:", selectedSquare);
+            } else {
+                console.log("No piece selected or wrong color");
             }
         }
     });
@@ -71,6 +78,7 @@ $(document).ready(function() {
         board.start();
         stockfish.postMessage("position startpos");
         $('#feedback').text('');
+        selectedSquare = null;  // Reset selection on reset
     });
 
     function provideFeedback(score) {
