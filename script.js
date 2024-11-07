@@ -43,6 +43,7 @@ $(document).ready(function() {
         if (!square) return;
 
         if (selectedSquare) {
+            // Attempt to move from selectedSquare to the clicked square
             const move = game.move({
                 from: selectedSquare,
                 to: square,
@@ -50,16 +51,19 @@ $(document).ready(function() {
             });
 
             if (move !== null) {
+                // Move was valid
                 board.position(game.fen());
                 clearHighlight();  // Remove highlight after move
                 selectedSquare = null;
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
             } else {
-                clearHighlight();  // Remove highlight if move is invalid
+                // Invalid move; deselect the square
+                clearHighlight();
                 selectedSquare = null;
             }
         } else {
+            // No square selected, so select this square if it has a piece
             const piece = game.get(square);
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
