@@ -46,9 +46,8 @@ $(document).ready(function() {
                 stockfish.postMessage("go depth 10");
                 selectedSquare = null;  // Reset selected square
             } else {
-                // If invalid move, deselect the selected square
-                clearHighlights();
-                selectedSquare = null;
+                // If invalid move, only clear the target highlight
+                clearHighlights('target');
             }
         } else {
             // No square is selected; highlight this square if it contains a piece
