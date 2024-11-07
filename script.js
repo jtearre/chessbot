@@ -60,6 +60,7 @@ $(document).ready(function() {
         game.reset();
         board.start();
         stockfish.postMessage("position startpos");
+        $('#feedback').text(''); // Clear feedback on reset
     });
 
     // Function to interpret Stockfish's score and provide feedback
@@ -80,7 +81,8 @@ $(document).ready(function() {
         } else {
             feedback = "You're in a very weak position!";
         }
-        console.log("Feedback:", feedback);
-        alert(feedback); // Display feedback in an alert
+        
+        // Display feedback in the feedback div
+        $('#feedback').text(feedback);
     }
 });
