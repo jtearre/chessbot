@@ -31,7 +31,7 @@ $(document).ready(function() {
         if (!square) return;
 
         if (selectedSquare) {
-            // If a square is already selected, attempt a move
+            // Attempt a move from the selected square to the clicked square
             const move = game.move({
                 from: selectedSquare,
                 to: square,
@@ -39,22 +39,22 @@ $(document).ready(function() {
             });
 
             if (move !== null) {
-                // Move was valid; update board and clear previous highlights
+                // Move was valid; update the board and clear previous highlights
                 board.position(game.fen());
                 clearHighlights();
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
                 selectedSquare = null;  // Reset selected square
             } else {
-                // If invalid move, only clear the target highlight
-                clearHighlights('target');
+                // Invalid move; keep the highlight on the selected square
+                highlightSquare(selectedSquare, 'selected');
             }
         } else {
-            // No square is selected; highlight this square if it contains a piece
+            // No square is currently selected; select this square if it contains a piece
             const piece = game.get(square);
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
-                highlightSquare(square); // Highlight selected square
+                highlightSquare(square, 'selected'); // Highlight the selected square
             } else {
                 clearHighlights(); // Clear any accidental highlights
             }
@@ -72,7 +72,7 @@ $(document).ready(function() {
         if (move === null) return 'snapback';
 
         board.position(game.fen());
-        clearHighlights(); // Clear any highlights after dragging
+        clearHighlights(); // Clear all highlights after a successful drag move
         stockfish.postMessage(`position fen ${game.fen()}`);
         stockfish.postMessage("go depth 10");
     }
@@ -82,18 +82,29 @@ $(document).ready(function() {
         board.start();
         stockfish.postMessage("position startpos");
         $('#feedback').text('');
-        clearHighlights();  // Clear highlight on reset
+        clearHighlights();  // Clear all highlights on reset
         selectedSquare = null;
     });
 
-    // Function to apply highlight to a single square
-    function highlightSquare(square) {
-        clearHighlights(); // Remove any existing highlight
-        $(`[data-square='${square}']`).addClass('highlighted'); // Highlight the selected or target square
+    // Function to highlight selected or target squares
+    function highlightSquare(square, type) {
+        if (type === 'selected') {
+            clearHighlights('selected'); // Remove existing selected highlights
+            $(`[data-square='${square}']`).addClass('highlighted-selected'); // Highlight the selected square
+        } else if (type === 'target') {
+            clearHighlights('target'); // Remove existing target highlights
+            $(`[data-square='${square}']`).addClass('highlighted-target'); // Highlight the target square
+        }
     }
 
-    // Function to clear all highlights
-    function clearHighlights() {
-        $('.square-55d63').removeClass('highlighted');
+    // Function to clear specific or all highlights
+    function clearHighlights(type) {
+        if (type === 'selected') {
+            $('.square-55d63').removeClass('highlighted-selected');
+        } else if (type === 'target') {
+            $('.square-55d63').removeClass('highlighted-target');
+        } else {
+            $('.square-55d63').removeClass('highlighted-selected highlighted-target');
+        }
     }
 });
