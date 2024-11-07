@@ -10,9 +10,23 @@ $(document).ready(function() {
     // Initialize Chess.js to manage game state
     let game = new Chess();
 
-    // Initialize Stockfish using the CDN
+    // Initialize Stockfish
     console.log("Creating Stockfish worker...");
-const stockfish = new Worker("https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.asm.wasm.js");
+    const stockfish = new Worker("https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.asm.wasm.js");
+
+    stockfish.onmessage = function(event) {
+        console.log("Stockfish message received:", event.data);
+
+        const message = event.data;
+        if (message.startsWith("bestmove")) {
+            const bestMove = message.split(" ")[1];
+            if (bestMove && bestMove !== "(none)") {
+                console.log(`Stockfish move: ${bestMove}`);
+                game.move(bestMove); // Update the game state with Stockfish's move
+                board.position(game.fen()); // Update the board to reflect Stockfish's move
+            }
+        }
+    };
 
     // Function to handle piece drop and move validation
     function onDrop(source, target) {
@@ -34,21 +48,6 @@ const stockfish = new Worker("https://cdnjs.cloudflare.com/ajax/libs/stockfish.j
         stockfish.postMessage(`position fen ${game.fen()}`);
         stockfish.postMessage("go depth 15"); // Set analysis depth for Stockfish
     }
-
-    // Listen for Stockfish's best move and apply it
-    stockfish.onmessage = function(event) {
-        console.log("Stockfish message received:", event.data);
-
-        const message = event.data;
-        if (message.startsWith("bestmove")) {
-            const bestMove = message.split(" ")[1];
-            if (bestMove && bestMove !== "(none)") {
-                console.log(`Stockfish move: ${bestMove}`);
-                game.move(bestMove); // Update the game state with Stockfish's move
-                board.position(game.fen()); // Update the board to reflect Stockfish's move
-            }
-        }
-    };
 
     // Reset the game when the reset button is clicked
     $('#reset-button').on('click', function() {
