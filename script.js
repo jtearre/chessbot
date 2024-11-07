@@ -12,7 +12,18 @@ $(document).ready(function() {
 
     stockfish.onmessage = function(event) {
         const message = event.data;
-        
+
+        // Handle feedback from Stockfish on move quality
+        if (message.includes("score cp")) {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            if (scoreMatch) {
+                let score = parseInt(scoreMatch[1]);
+                if (game.turn() === 'b') score = -score; // Adjust score for White's perspective
+                provideFeedback(score);
+            }
+        }
+
+        // Handle Stockfish move response
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
@@ -24,13 +35,15 @@ $(document).ready(function() {
 
     stockfish.postMessage("uci");
 
-    // Click-to-move logic with highlighting
+    // Click-to-move with persistent highlighting
     $('#chess-board').on('click', '.square-55d63', function() {
         const square = $(this).attr('data-square');
         if (!square) return;
 
+        const piece = game.get(square);
+
         if (selectedSquare) {
-            // Attempt to move from selectedSquare to the clicked square
+            // If a piece is selected, attempt a move
             const move = game.move({
                 from: selectedSquare,
                 to: square,
@@ -38,32 +51,35 @@ $(document).ready(function() {
             });
 
             if (move !== null) {
-                // Move was valid; update the board and apply green highlight to the destination
+                // Move was valid; update board, apply green highlight to target, and reset selection
                 board.position(game.fen());
                 clearHighlights();
                 highlightSquare(square, 'target'); // Highlight target square green
-                selectedSquare = null; // Reset selected square for the next turn
+                selectedSquare = null; // Reset selected square
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
+            } else if (piece && piece.color === game.turn()) {
+                // If clicked on another of player's pieces, switch selected piece
+                selectedSquare = square;
+                clearHighlights();
+                highlightSquare(square, 'selected'); // Highlight the new selected square yellow
             } else {
-                // If the move was invalid, keep the yellow highlight on the selected square
-                clearHighlights('target'); // Clear only target highlights, not selected
-                highlightSquare(selectedSquare, 'selected'); // Keep selected highlight
+                // Invalid move; keep the original selected piece highlighted
+                clearHighlights('target');
+                highlightSquare(selectedSquare, 'selected');
             }
         } else {
-            // First click: select the square if it contains a piece of the current player's color
-            const piece = game.get(square);
+            // No square is selected; highlight this square if it contains a piece of the current player's color
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
                 clearHighlights(); // Clear any previous highlights
                 highlightSquare(square, 'selected'); // Highlight selected square yellow
             } else {
-                clearHighlights(); // Clear any accidental highlights if clicked on empty or invalid square
+                clearHighlights(); // Clear accidental highlights on invalid click
             }
         }
     });
 
-    // Reset the board and clear all highlights when resetting the game
     $('#reset-button').on('click', function() {
         game.reset();
         board.start();
@@ -73,7 +89,7 @@ $(document).ready(function() {
         selectedSquare = null;
     });
 
-    // Function to apply highlight to either selected or target squares
+    // Function to highlight selected or target squares
     function highlightSquare(square, type) {
         if (type === 'selected') {
             $(`[data-square='${square}']`).addClass('highlighted-selected'); // Highlight yellow
@@ -91,5 +107,19 @@ $(document).ready(function() {
         } else {
             $('.square-55d63').removeClass('highlighted-selected highlighted-target');
         }
+    }
+
+    // Provide feedback based on Stockfish evaluation
+    function provideFeedback(score) {
+        let feedback;
+        if (score > 300) feedback = "You're in a very strong position!";
+        else if (score > 150) feedback = "You have a clear advantage.";
+        else if (score > 50) feedback = "You have a slight advantage.";
+        else if (score > -50) feedback = "The position is balanced.";
+        else if (score > -150) feedback = "You're at a slight disadvantage.";
+        else if (score > -300) feedback = "You're at a clear disadvantage.";
+        else feedback = "You're in a very weak position!";
+        
+        $('#feedback').text(feedback);
     }
 });
