@@ -36,13 +36,12 @@ $(document).ready(function() {
 
     stockfish.postMessage("uci");
 
-    // Handle click-to-move logic
-    board.on('click', function(event) {
-        const square = event.target.getAttribute('data-square');
-        if (!square) return;
+    // Click-to-move using jQuery
+    $('#chess-board').on('click', '.square-55d63', function() {
+        const square = $(this).data('square');
 
         if (selectedSquare) {
-            // Try to move piece to the clicked square
+            // Attempt to move to the clicked square
             const move = game.move({
                 from: selectedSquare,
                 to: square,
@@ -59,7 +58,7 @@ $(document).ready(function() {
                 selectedSquare = null;
             }
         } else {
-            // Select a square if it has a piece of the current player's color
+            // Select the square if it contains a piece of the current player's color
             const piece = game.get(square);
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
