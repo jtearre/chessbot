@@ -23,8 +23,18 @@ $(document).ready(function() {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
                 console.log(`Stockfish move: ${bestMove}`);
-                game.move(bestMove); // Update the game state with Stockfish's move
-                board.position(game.fen()); // Update the board to reflect Stockfish's move
+                
+                // Apply Stockfish's move to the game state
+                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
+
+                // Verify if the move is valid
+                if (move === null) {
+                    console.error("Invalid move from Stockfish:", bestMove);
+                    return;
+                }
+
+                // Update the board to reflect Stockfish's move
+                board.position(game.fen());
             }
         }
     };
