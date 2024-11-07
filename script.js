@@ -1,7 +1,7 @@
 $(document).ready(function() {
     var board = Chessboard('chess-board', {
         position: 'start',
-        draggable: true,
+        draggable: false,  // Disable dragging to enable click-to-move
         pieceTheme: 'https://raw.githubusercontent.com/ornicar/lila/master/public/piece/alpha/{piece}.svg'
     });
 
@@ -36,9 +36,13 @@ $(document).ready(function() {
 
     stockfish.postMessage("uci");
 
-    board.on('click', function(square) {
+    // Handle click-to-move logic
+    board.on('click', function(event) {
+        const square = event.target.getAttribute('data-square');
+        if (!square) return;
+
         if (selectedSquare) {
-            // Move piece to the clicked square
+            // Try to move piece to the clicked square
             const move = game.move({
                 from: selectedSquare,
                 to: square,
@@ -55,7 +59,7 @@ $(document).ready(function() {
                 selectedSquare = null;
             }
         } else {
-            // Select a square with a piece
+            // Select a square if it has a piece of the current player's color
             const piece = game.get(square);
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
