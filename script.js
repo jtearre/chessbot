@@ -1,5 +1,4 @@
 $(document).ready(function() {
-    // Initialize the chessboard
     var board = Chessboard('chess-board', {
         position: 'start',
         draggable: true,
@@ -7,75 +6,81 @@ $(document).ready(function() {
         onDrop: onDrop // Triggered when a piece is dropped
     });
 
-    // Initialize Chess.js to manage game state
     let game = new Chess();
-
-    // Initialize Stockfish
-    console.log("Creating Stockfish worker...");
     const stockfish = new Worker("js/stockfish.js");
 
     stockfish.onmessage = function(event) {
         console.log("Stockfish message received:", event.data);
 
-        // Check for Stockfish's best move
         const message = event.data;
+
+        // Capture Stockfish's evaluation
+        if (message.startsWith("info depth")) {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            if (scoreMatch) {
+                const score = parseInt(scoreMatch[1]);
+                provideFeedback(score);
+            }
+        }
+
+        // Capture Stockfish's best move and apply it
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
-                console.log(`Parsed Stockfish move: ${bestMove}`);
+                console.log(`Stockfish move: ${bestMove}`);
                 
-                // Extract 'from' and 'to' positions from Stockfish's best move
-                const from = bestMove.slice(0, 2);
-                const to = bestMove.slice(2, 4);
-                console.log(`Attempting to move from ${from} to ${to}`);
-
-                // Apply Stockfish's move to the game state
-                const move = game.move({ from: from, to: to });
-
-                // Verify if the move is valid
-                if (move === null) {
-                    console.error("Invalid move from Stockfish:", bestMove);
-                    return;
-                } else {
-                    console.log("Move successfully applied to game state:", move);
+                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
+                if (move !== null) {
+                    board.position(game.fen());
                 }
-
-                // Update the board to reflect Stockfish's move
-                board.position(game.fen());
-                console.log("Board updated to new position:", game.fen());
             }
         }
     };
 
-    // Initialize Stockfish with UCI command
-    stockfish.postMessage("uci"); // Start Stockfish in UCI mode
+    stockfish.postMessage("uci");
 
-    // Function to handle piece drop and move validation
     function onDrop(source, target) {
-        // Check if the move is legal
         const move = game.move({
             from: source,
             to: target,
-            promotion: 'q' // Auto-promote pawns to queen
+            promotion: 'q'
         });
 
-        // If the move is illegal, snap back
         if (move === null) return 'snapback';
 
-        // Update the board position with the new move
         board.position(game.fen());
 
-        // Send the updated position to Stockfish for analysis
         console.log(`Player move: ${source}-${target}`);
         stockfish.postMessage(`position fen ${game.fen()}`);
-        stockfish.postMessage("go depth 15"); // Set analysis depth for Stockfish
+        stockfish.postMessage("go depth 10"); // Requesting an evaluation at depth 10
     }
 
-    // Reset the game when the reset button is clicked
     $('#reset-button').on('click', function() {
         console.log("Resetting game...");
         game.reset();
         board.start();
         stockfish.postMessage("position startpos");
     });
+
+    // Function to interpret Stockfish's score and provide feedback
+    function provideFeedback(score) {
+        let feedback;
+        if (score > 300) {
+            feedback = "You're in a very strong position!";
+        } else if (score > 150) {
+            feedback = "You have a clear advantage.";
+        } else if (score > 50) {
+            feedback = "You have a slight advantage.";
+        } else if (score > -50) {
+            feedback = "The position is balanced.";
+        } else if (score > -150) {
+            feedback = "You're at a slight disadvantage.";
+        } else if (score > -300) {
+            feedback = "You're at a clear disadvantage.";
+        } else {
+            feedback = "You're in a very weak position!";
+        }
+        console.log("Feedback:", feedback);
+        alert(feedback); // Display feedback in an alert
+    }
 });
