@@ -9,7 +9,7 @@ $(document).ready(function() {
     let game = new Chess();
     const stockfish = new Worker("js/stockfish.js");
 
-    let selectedSquare = null;
+    let selectedSquare = null; // Store the square of the selected piece
     let evaluationReady = false;
 
     stockfish.onmessage = function(event) {
@@ -43,6 +43,9 @@ $(document).ready(function() {
         if (!square) return;
 
         if (selectedSquare) {
+            // Highlight the destination square temporarily
+            highlightSquare(square, 'target'); 
+
             // Attempt to move from selectedSquare to the clicked square
             const move = game.move({
                 from: selectedSquare,
@@ -51,23 +54,22 @@ $(document).ready(function() {
             });
 
             if (move !== null) {
-                // Move was valid
+                // Move was valid; update board and clear highlights
                 board.position(game.fen());
-                clearHighlight();  // Remove highlight after move
-                selectedSquare = null;
+                clearHighlight();  
+                selectedSquare = null;  // Clear selected square after move
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
             } else {
-                // Invalid move; deselect the square
-                clearHighlight();
-                selectedSquare = null;
+                // If invalid move, only clear the destination highlight
+                clearHighlight('target');
             }
         } else {
-            // No square selected, so select this square if it has a piece
+            // If no square is selected, select this square if it has a piece
             const piece = game.get(square);
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
-                highlightSquare(square); // Highlight selected square
+                highlightSquare(square, 'selected'); // Highlight selected square
             } else {
                 clearHighlight(); // Clear any accidental highlights
             }
@@ -100,14 +102,26 @@ $(document).ready(function() {
     });
 
     // Function to apply highlight
-    function highlightSquare(square) {
-        clearHighlight(); // Remove any existing highlight
-        $(`[data-square='${square}']`).addClass('highlighted');
+    function highlightSquare(square, type) {
+        // Remove existing highlights before adding a new one
+        if (type === 'selected') {
+            clearHighlight('selected'); 
+            $(`[data-square='${square}']`).addClass('highlighted-selected'); // Highlight for selected piece
+        } else if (type === 'target') {
+            clearHighlight('target');
+            $(`[data-square='${square}']`).addClass('highlighted-target'); // Highlight for destination
+        }
     }
 
-    // Function to clear highlight from all squares
-    function clearHighlight() {
-        $('.square-55d63').removeClass('highlighted');
+    // Function to clear highlights from all or specific type
+    function clearHighlight(type) {
+        if (type === 'selected') {
+            $('.square-55d63').removeClass('highlighted-selected');
+        } else if (type === 'target') {
+            $('.square-55d63').removeClass('highlighted-target');
+        } else {
+            $('.square-55d63').removeClass('highlighted-selected highlighted-target');
+        }
     }
 
     function provideFeedback(score) {
