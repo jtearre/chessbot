@@ -9,6 +9,8 @@ $(document).ready(function() {
     const stockfish = new Worker("js/stockfish.js");
 
     let selectedSquare = null; // Store the currently selected square for moving
+    let moveHistory = []; // Array to store the history of moves
+    let currentMoveIndex = 0; // Tracks current position in history
 
     stockfish.onmessage = function(event) {
         const message = event.data;
@@ -28,7 +30,10 @@ $(document).ready(function() {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
                 const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
-                if (move !== null) board.position(game.fen());
+                if (move !== null) {
+                    addMoveToHistory();
+                    board.position(game.fen());
+                }
             }
         }
     };
@@ -51,11 +56,12 @@ $(document).ready(function() {
             });
 
             if (move !== null) {
-                // Move was valid; update board, apply green highlight to target, and reset selection
+                // Move was valid; update board, apply green highlight to target, reset selection, and save move
                 board.position(game.fen());
                 clearHighlights();
                 highlightSquare(square, 'target'); // Highlight target square green
                 selectedSquare = null; // Reset selected square
+                addMoveToHistory(); // Add the move to history and update index
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
             } else if (piece && piece.color === game.turn()) {
@@ -69,10 +75,10 @@ $(document).ready(function() {
                 highlightSquare(selectedSquare, 'selected');
             }
         } else {
-            // No square is selected; highlight this square if it contains a piece of the current player's color
+            // First click to select a piece
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
-                clearHighlights(); // Clear any previous highlights
+                clearHighlights();
                 highlightSquare(square, 'selected'); // Highlight selected square yellow
             } else {
                 clearHighlights(); // Clear accidental highlights on invalid click
@@ -80,9 +86,41 @@ $(document).ready(function() {
         }
     });
 
+    // Add move to history and truncate future moves if branching
+    function addMoveToHistory() {
+        // Remove any moves after the current index if we're branching
+        if (currentMoveIndex < moveHistory.length - 1) {
+            moveHistory = moveHistory.slice(0, currentMoveIndex + 1);
+        }
+        moveHistory.push(game.fen());
+        currentMoveIndex = moveHistory.length - 1;
+    }
+
+    // Navigate backward through move history
+    $('#back-button').on('click', function() {
+        if (currentMoveIndex > 0) {
+            currentMoveIndex--;
+            game.load(moveHistory[currentMoveIndex]);
+            board.position(game.fen());
+            clearHighlights();
+        }
+    });
+
+    // Navigate forward through move history
+    $('#forward-button').on('click', function() {
+        if (currentMoveIndex < moveHistory.length - 1) {
+            currentMoveIndex++;
+            game.load(moveHistory[currentMoveIndex]);
+            board.position(game.fen());
+            clearHighlights();
+        }
+    });
+
     $('#reset-button').on('click', function() {
         game.reset();
         board.start();
+        moveHistory = [game.fen()];
+        currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
         $('#feedback').text('');
         clearHighlights();  // Clear all highlights on reset
