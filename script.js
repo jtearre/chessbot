@@ -20,7 +20,13 @@ $(document).ready(function() {
         if (evaluationReady && message.includes("score cp")) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
-                const score = parseInt(scoreMatch[1]);
+                let score = parseInt(scoreMatch[1]);
+
+                // Adjust score for White's perspective
+                if (game.turn() === 'b') {
+                    score = -score;
+                }
+                
                 provideFeedback(score);
                 evaluationReady = false; // Reset until next move
             }
@@ -71,7 +77,7 @@ $(document).ready(function() {
     function provideFeedback(score) {
         let feedback;
         if (score > 300) {
-            feedback = "You (White) are in a very strong position!";
+            feedback = "You're in a very strong position!";
         } else if (score > 150) {
             feedback = "You have a clear advantage.";
         } else if (score > 50) {
@@ -79,11 +85,11 @@ $(document).ready(function() {
         } else if (score > -50) {
             feedback = "The position is balanced.";
         } else if (score > -150) {
-            feedback = "You’re at a slight disadvantage.";
+            feedback = "You're at a slight disadvantage.";
         } else if (score > -300) {
-            feedback = "You’re at a clear disadvantage.";
+            feedback = "You're at a clear disadvantage.";
         } else {
-            feedback = "You’re in a very weak position!";
+            feedback = "You're in a very weak position!";
         }
         
         $('#feedback').text(feedback);
