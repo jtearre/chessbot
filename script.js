@@ -36,12 +36,10 @@ $(document).ready(function() {
 
     stockfish.postMessage("uci");
 
-    // Handle click-to-move using jQuery
+    // Click-to-move with square highlighting
     $('#chess-board').on('click', '.square-55d63', function() {
-        const square = $(this).attr('data-square');  // Retrieve the square using attr
-        console.log("Square clicked:", square);
-
-        if (!square) return; // Ensure we have a valid square
+        const square = $(this).attr('data-square');
+        if (!square) return;
 
         if (selectedSquare) {
             console.log("Trying to move from", selectedSquare, "to", square);
@@ -53,22 +51,22 @@ $(document).ready(function() {
             });
 
             if (move !== null) {
-                console.log("Move successful:", move);
                 board.position(game.fen());
-                selectedSquare = null;  // Reset selected square after move
+                clearHighlight();  // Remove highlight after move
+                selectedSquare = null;
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
             } else {
-                console.log("Invalid move, deselecting square");
+                clearHighlight();  // Remove highlight if move is invalid
                 selectedSquare = null;
             }
         } else {
             const piece = game.get(square);
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
-                console.log("Selected square:", selectedSquare);
+                highlightSquare(square); // Highlight selected square
             } else {
-                console.log("No piece selected or wrong color");
+                clearHighlight(); // Clear any accidental highlights
             }
         }
     });
@@ -78,8 +76,20 @@ $(document).ready(function() {
         board.start();
         stockfish.postMessage("position startpos");
         $('#feedback').text('');
-        selectedSquare = null;  // Reset selection on reset
+        clearHighlight();  // Clear highlight on reset
+        selectedSquare = null;
     });
+
+    // Function to apply highlight
+    function highlightSquare(square) {
+        clearHighlight(); // Remove any existing highlight
+        $(`[data-square='${square}']`).addClass('highlighted');
+    }
+
+    // Function to clear highlight from all squares
+    function clearHighlight() {
+        $('.square-55d63').removeClass('highlighted');
+    }
 
     function provideFeedback(score) {
         let feedback;
