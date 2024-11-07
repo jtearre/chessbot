@@ -9,17 +9,20 @@ $(document).ready(function() {
     let game = new Chess();
     const stockfish = new Worker("js/stockfish.js");
 
+    let evaluationReady = false;
+
     stockfish.onmessage = function(event) {
         console.log("Stockfish message received:", event.data);
 
         const message = event.data;
 
-        // Capture Stockfish's evaluation
-        if (message.startsWith("info depth")) {
+        // Only proceed with finalized evaluation
+        if (evaluationReady && message.includes("score cp")) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 const score = parseInt(scoreMatch[1]);
                 provideFeedback(score);
+                evaluationReady = false; // Reset until next move
             }
         }
 
@@ -33,6 +36,7 @@ $(document).ready(function() {
                 if (move !== null) {
                     board.position(game.fen());
                 }
+                evaluationReady = true; // Allow evaluation for next move
             }
         }
     };
@@ -63,11 +67,11 @@ $(document).ready(function() {
         $('#feedback').text(''); // Clear feedback on reset
     });
 
-    // Function to interpret Stockfish's score and provide feedback
+    // Function to interpret Stockfish's score and provide feedback from White's perspective
     function provideFeedback(score) {
         let feedback;
         if (score > 300) {
-            feedback = "You're in a very strong position!";
+            feedback = "You (White) are in a very strong position!";
         } else if (score > 150) {
             feedback = "You have a clear advantage.";
         } else if (score > 50) {
@@ -75,14 +79,13 @@ $(document).ready(function() {
         } else if (score > -50) {
             feedback = "The position is balanced.";
         } else if (score > -150) {
-            feedback = "You're at a slight disadvantage.";
+            feedback = "You’re at a slight disadvantage.";
         } else if (score > -300) {
-            feedback = "You're at a clear disadvantage.";
+            feedback = "You’re at a clear disadvantage.";
         } else {
-            feedback = "You're in a very weak position!";
+            feedback = "You’re in a very weak position!";
         }
         
-        // Display feedback in the feedback div
         $('#feedback').text(feedback);
     }
 });
