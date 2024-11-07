@@ -1,8 +1,9 @@
 $(document).ready(function() {
     var board = Chessboard('chess-board', {
         position: 'start',
-        draggable: false,  // Disable dragging to enable click-to-move
-        pieceTheme: 'https://raw.githubusercontent.com/ornicar/lila/master/public/piece/alpha/{piece}.svg'
+        draggable: true,  // Enable dragging for drag-to-move
+        pieceTheme: 'https://raw.githubusercontent.com/ornicar/lila/master/public/piece/alpha/{piece}.svg',
+        onDrop: onDrop  // Function to handle moves
     });
 
     let game = new Chess();
@@ -42,8 +43,6 @@ $(document).ready(function() {
         if (!square) return;
 
         if (selectedSquare) {
-            console.log("Trying to move from", selectedSquare, "to", square);
-
             const move = game.move({
                 from: selectedSquare,
                 to: square,
@@ -70,6 +69,22 @@ $(document).ready(function() {
             }
         }
     });
+
+    // Drag-to-move handling
+    function onDrop(source, target) {
+        const move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q'
+        });
+
+        if (move === null) return 'snapback';
+
+        board.position(game.fen());
+        clearHighlight(); // Clear any highlights after dragging
+        stockfish.postMessage(`position fen ${game.fen()}`);
+        stockfish.postMessage("go depth 10");
+    }
 
     $('#reset-button').on('click', function() {
         game.reset();
