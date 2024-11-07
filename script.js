@@ -10,18 +10,13 @@ $(document).ready(function() {
     // Initialize Chess.js to manage game state
     let game = new Chess();
 
-    // Initialize Stockfish from the local or CDN version
+    // Initialize Stockfish using the CDN link you provided
     console.log("Creating Stockfish worker...");
-const stockfish = new Worker("js/stockfish.js");
+    const stockfish = new Worker("https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.asm.wasm.js");
 
     // Test if Stockfish responds to an initial command
     stockfish.onmessage = function(event) {
         console.log("Stockfish message received:", event.data);
-
-        // Check if Stockfish sends back 'uciok' as an acknowledgment
-        if (event.data === "uciok") {
-            console.log("Stockfish initialized successfully.");
-        }
 
         // Process Stockfish's best move
         const message = event.data;
