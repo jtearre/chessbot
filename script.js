@@ -22,19 +22,27 @@ $(document).ready(function() {
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
-                console.log(`Stockfish move: ${bestMove}`);
+                console.log(`Parsed Stockfish move: ${bestMove}`);
                 
+                // Extract 'from' and 'to' positions from Stockfish's best move
+                const from = bestMove.slice(0, 2);
+                const to = bestMove.slice(2, 4);
+                console.log(`Attempting to move from ${from} to ${to}`);
+
                 // Apply Stockfish's move to the game state
-                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
+                const move = game.move({ from: from, to: to });
 
                 // Verify if the move is valid
                 if (move === null) {
                     console.error("Invalid move from Stockfish:", bestMove);
                     return;
+                } else {
+                    console.log("Move successfully applied to game state:", move);
                 }
 
                 // Update the board to reflect Stockfish's move
                 board.position(game.fen());
+                console.log("Board updated to new position:", game.fen());
             }
         }
     };
