@@ -10,13 +10,20 @@ $(document).ready(function() {
     // Initialize Chess.js to manage game state
     let game = new Chess();
 
-    // Initialize Stockfish
+    // Initialize Stockfish from the local or CDN version
     console.log("Creating Stockfish worker...");
     const stockfish = new Worker("https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.asm.wasm.js");
 
+    // Test if Stockfish responds to an initial command
     stockfish.onmessage = function(event) {
         console.log("Stockfish message received:", event.data);
 
+        // Check if Stockfish sends back 'uciok' as an acknowledgment
+        if (event.data === "uciok") {
+            console.log("Stockfish initialized successfully.");
+        }
+
+        // Process Stockfish's best move
         const message = event.data;
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
@@ -27,6 +34,9 @@ $(document).ready(function() {
             }
         }
     };
+
+    // Send initial command to Stockfish to verify it loads correctly
+    stockfish.postMessage("uci");
 
     // Function to handle piece drop and move validation
     function onDrop(source, target) {
