@@ -12,28 +12,9 @@ $(document).ready(function() {
     let moveHistory = []; // Array to store the history of moves
     let currentMoveIndex = 0; // Tracks current position in history
     let skillLevel = 0; // Default skill level for Stockfish (easy)
-    let lastScore = null; // Stores the last evaluation score for feedback
 
     stockfish.onmessage = function(event) {
         const message = event.data;
-
-        // Parse Stockfish's score to give move-by-move feedback
-        if (message.includes("score cp")) {
-            const scoreMatch = message.match(/score cp (-?\d+)/);
-            if (scoreMatch) {
-                let currentScore = parseInt(scoreMatch[1]);
-                if (game.turn() === 'b') currentScore = -currentScore; // Adjust for White's perspective
-
-                // If there's a previous score, provide feedback on the last move
-                if (lastScore !== null) {
-                    const scoreDiff = currentScore - lastScore;
-                    provideMoveFeedback(scoreDiff);
-                }
-
-                // Update the last score for the next move
-                lastScore = currentScore;
-            }
-        }
 
         // Handle Stockfish move response
         if (message.startsWith("bestmove")) {
@@ -115,16 +96,6 @@ $(document).ready(function() {
         currentMoveIndex = moveHistory.length - 1;
     }
 
-    // Function to provide move feedback based on score difference
-    function provideMoveFeedback(scoreDiff) {
-        let feedback;
-        if (scoreDiff > 30) feedback = "Good move!";
-        else if (scoreDiff >= -30 && scoreDiff <= 30) feedback = "Fine move.";
-        else feedback = "Bad move!";
-        
-        $('#move-feedback').text(feedback); // Update move-specific feedback
-    }
-
     // Navigate backward through move history
     $('#back-button').on('click', function() {
         if (currentMoveIndex > 0) {
@@ -151,11 +122,9 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
-        $('#position-feedback').text('');
-        $('#move-feedback').text('');
+        $('#feedback').text('');
         clearHighlights();  // Clear all highlights on reset
         selectedSquare = null;
-        lastScore = null; // Reset last score on reset
     });
 
     // Function to highlight selected or target squares
@@ -189,6 +158,6 @@ $(document).ready(function() {
         else if (score > -300) feedback = "You're at a clear disadvantage.";
         else feedback = "You're in a very weak position!";
         
-        $('#position-feedback').text(feedback); // Update position feedback
+        $('#feedback').text(feedback);
     }
 });
