@@ -12,7 +12,7 @@ $(document).ready(function() {
 
     // Initialize Stockfish from the local or CDN version
     console.log("Creating Stockfish worker...");
-    const stockfish = new Worker("https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.asm.wasm.js");
+const stockfish = new Worker("js/stockfish.js");
 
     // Test if Stockfish responds to an initial command
     stockfish.onmessage = function(event) {
