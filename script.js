@@ -22,17 +22,18 @@ $(document).ready(function() {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 let currentScore = parseInt(scoreMatch[1]);
-                if (game.turn() === 'b') currentScore = -currentScore;
+                const isWhite = game.turn() === 'w';
+                currentScore = isWhite ? currentScore : -currentScore;
 
                 // Provide move feedback based on score difference
                 if (lastScore !== null) {
                     const scoreDiff = currentScore - lastScore;
-                    provideMoveFeedback(scoreDiff);
+                    provideMoveFeedback(scoreDiff, isWhite);
                 }
 
                 // Provide position feedback based on the current score
-                provideFeedback(currentScore);
-                lastScore = currentScore; // Update last score
+                providePositionFeedback(currentScore, isWhite);
+                lastScore = currentScore;
             }
         }
 
@@ -107,14 +108,30 @@ $(document).ready(function() {
         currentMoveIndex = moveHistory.length - 1;
     }
 
-    // Provide move feedback based on score difference and update #move-feedback element
-    function provideMoveFeedback(scoreDiff) {
+    // Provide move feedback for White or Black based on score difference
+    function provideMoveFeedback(scoreDiff, isWhite) {
         let feedback;
         if (scoreDiff > 30) feedback = "Good move!";
         else if (scoreDiff >= -30 && scoreDiff <= 30) feedback = "Fine move.";
         else feedback = "Bad move!";
         
-        $('#move-feedback').text(feedback); // Update only move feedback
+        const feedbackId = isWhite ? '#white-move-feedback' : '#black-move-feedback';
+        $(feedbackId).text(feedback);
+    }
+
+    // Provide position feedback for White or Black
+    function providePositionFeedback(score, isWhite) {
+        let feedback;
+        if (score > 300) feedback = "Very strong position!";
+        else if (score > 150) feedback = "Clear advantage.";
+        else if (score > 50) feedback = "Slight advantage.";
+        else if (score > -50) feedback = "Balanced position.";
+        else if (score > -150) feedback = "Slight disadvantage.";
+        else if (score > -300) feedback = "Clear disadvantage.";
+        else feedback = "Very weak position!";
+        
+        const feedbackId = isWhite ? '#white-position-feedback' : '#black-position-feedback';
+        $(feedbackId).text(feedback);
     }
 
     $('#back-button').on('click', function() {
@@ -141,8 +158,10 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
-        $('#position-feedback').text(''); // Clear position feedback
-        $('#move-feedback').text(''); // Clear move feedback
+        $('#white-position-feedback').text('');
+        $('#white-move-feedback').text('');
+        $('#black-position-feedback').text('');
+        $('#black-move-feedback').text('');
         clearHighlights();
         selectedSquare = null;
         lastScore = null;
@@ -157,26 +176,4 @@ $(document).ready(function() {
     }
 
     function clearHighlights(type) {
-        if (type === 'selected') {
-            $('.square-55d63').removeClass('highlighted-selected');
-        } else if (type === 'target') {
-            $('.square-55d63').removeClass('highlighted-target');
-        } else {
-            $('.square-55d63').removeClass('highlighted-selected highlighted-target');
-        }
-    }
-
-    // Provide position feedback and update #position-feedback element
-    function provideFeedback(score) {
-        let feedback;
-        if (score > 300) feedback = "You're in a very strong position!";
-        else if (score > 150) feedback = "You have a clear advantage.";
-        else if (score > 50) feedback = "You have a slight advantage.";
-        else if (score > -50) feedback = "The position is balanced.";
-        else if (score > -150) feedback = "You're at a slight disadvantage.";
-        else if (score > -300) feedback = "You're at a clear disadvantage.";
-        else feedback = "You're in a very weak position!";
-        
-        $('#position-feedback').text(feedback); // Update only position feedback
-    }
-});
+        if (type === 'selected')
