@@ -40,9 +40,9 @@ $(document).ready(function() {
 		const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 const currentScore = parseInt(scoreMatch[1]);
-		const negatedScore = currentScore * -0.1;
+		const negatedScore = currentScore * -0.01;
                 console.log("White Position Score:", negatedScore);
-                $('#white-position-score').text(`White Position Score: ${negatedScore}`);
+                $('#white-position-score').text(`White: ${negatedScore}`);
             } else {
                 console.log("No score found in message.");
             }
