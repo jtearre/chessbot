@@ -18,7 +18,7 @@ $(document).ready(function() {
         const message = event.data;
         console.log("Stockfish response:", message);
 
-        // Handle best move to trigger Stockfish move for Black and display White's score
+        // Detect best move and move for Black
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
@@ -37,12 +37,12 @@ $(document).ready(function() {
             }
         }
 
-        // Capture the score from the last evaluation before the best move
+        // Capture score from Stockfish's evaluation for White's position
         if (message.includes("score cp") && game.turn() === 'w') {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 lastScore = parseInt(scoreMatch[1]);
-                console.log("Captured Score:", lastScore);
+                console.log("Captured Score:", lastScore); // Log captured score
             }
         }
     };
