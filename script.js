@@ -15,8 +15,11 @@ $(document).ready(function() {
 
     stockfish.onmessage = function(event) {
         const message = event.data;
-        console.log("Stockfish response:", message);
+        
+        // Log every Stockfish message for debugging
+        console.log("Received from Stockfish:", message);
 
+        // Check for best move to trigger Stockfish move for Black
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
@@ -28,13 +31,15 @@ $(document).ready(function() {
             }
         }
 
-        // Display raw White position score after White moves
-        if (message.includes("score cp") && game.turn() === 'w') {
+        // Look for position score after White's move
+        if (message.includes("score cp")) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 const currentScore = parseInt(scoreMatch[1]);
                 console.log("White Position Score:", currentScore);
                 $('#white-position-score').text(`White Position Score: ${currentScore}`);
+            } else {
+                console.log("No score found in message.");
             }
         }
     };
