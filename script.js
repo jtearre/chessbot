@@ -29,6 +29,9 @@ $(document).ready(function() {
                     const scoreDiff = currentScore - lastScore;
                     provideMoveFeedback(scoreDiff);
                 }
+
+                // Update position feedback based on the current score
+                provideFeedback(currentScore);
                 lastScore = currentScore; // Update last score
             }
         }
