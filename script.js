@@ -138,7 +138,7 @@ $(document).ready(function() {
         else if (scoreDiff >= -30 && scoreDiff <= 30) feedback = "Fine move.";
         else feedback = "Bad move!";
         
-        const feedbackId = isWhite ? '#white-move-feedback' : '#black-move-feedback';
+        const feedbackId = isWhite ? '#black-move-feedback' : '#white-move-feedback';
         console.log(`Updating ${isWhite ? "White" : "Black"} move feedback:`, feedback);
         $(feedbackId).text(feedback);
     }
