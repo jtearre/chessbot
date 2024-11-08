@@ -42,7 +42,7 @@ $(document).ready(function() {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 lastScore = parseInt(scoreMatch[1]);
-		lastScore = lastScore * -0.1;
+		//lastScore = lastScore * -0.1;
                 console.log("Captured Score:", lastScore); // Log captured score
             }
         }
