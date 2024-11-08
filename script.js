@@ -18,6 +18,10 @@ $(document).ready(function() {
     stockfish.onmessage = function(event) {
         const message = event.data;
 
+        // Log each Stockfish response and game turn
+        console.log("Stockfish response:", message);
+        console.log("Current game turn:", game.turn());
+
         // Parse Stockfish's score for move-by-move feedback
         if (message.includes("score cp")) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
@@ -25,24 +29,28 @@ $(document).ready(function() {
                 let currentScore = parseInt(scoreMatch[1]);
                 const isWhiteTurn = game.turn() === 'w';
 
+                console.log("Evaluated isWhiteTurn:", isWhiteTurn);  // Log White turn evaluation
+
                 currentScore = isWhiteTurn ? currentScore : -currentScore;
 
                 if (isWhiteTurn) {
+                    console.log("Processing White feedback");  // Confirm White feedback entry
+
                     if (lastWhiteScore !== null) {
                         const scoreDiff = currentScore - lastWhiteScore;
-                        console.log("White move feedback:", scoreDiff);
+                        console.log("White move feedback:", scoreDiff);  // Confirm White move feedback
                         provideMoveFeedback(scoreDiff, true); // White move feedback
                     }
-                    console.log("White position feedback:", currentScore);
+                    console.log("White position feedback:", currentScore);  // Confirm White position feedback
                     providePositionFeedback(currentScore, true); // White position feedback
                     lastWhiteScore = currentScore;
                 } else {
                     if (lastBlackScore !== null) {
                         const scoreDiff = currentScore - lastBlackScore;
-                        console.log("Black move feedback:", scoreDiff);
+                        console.log("Black move feedback:", scoreDiff);  // Confirm Black move feedback
                         provideMoveFeedback(scoreDiff, false); // Black move feedback
                     }
-                    console.log("Black position feedback:", currentScore);
+                    console.log("Black position feedback:", currentScore);  // Confirm Black position feedback
                     providePositionFeedback(currentScore, false); // Black position feedback
                     lastBlackScore = currentScore;
                 }
@@ -123,6 +131,7 @@ $(document).ready(function() {
         currentMoveIndex = moveHistory.length - 1;
     }
 
+    // Provide move feedback for White or Black based on score difference
     function provideMoveFeedback(scoreDiff, isWhite) {
         let feedback;
         if (scoreDiff > 30) feedback = "Good move!";
@@ -134,6 +143,7 @@ $(document).ready(function() {
         $(feedbackId).text(feedback);
     }
 
+    // Provide position feedback for White or Black
     function providePositionFeedback(score, isWhite) {
         let feedback;
         if (score > 300) feedback = "Very strong position!";
