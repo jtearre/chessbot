@@ -12,7 +12,7 @@ $(document).ready(function() {
     let moveHistory = [];
     let currentMoveIndex = 0;
     let skillLevel = 0;
-    let lastScore = null; // Track the last position score
+    let lastScore = null;
 
     stockfish.onmessage = function(event) {
         const message = event.data;
@@ -32,6 +32,7 @@ $(document).ready(function() {
             // Display White's position score if lastScore was recorded
             if (lastScore !== null) {
                 $('#white-position-score').text(`White Position Score: ${lastScore}`);
+                console.log(`White Position Score: ${lastScore}`);
                 lastScore = null;  // Reset for the next White move
             }
         }
@@ -41,6 +42,7 @@ $(document).ready(function() {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 lastScore = parseInt(scoreMatch[1]);
+                console.log("Captured Score:", lastScore);
             }
         }
     };
