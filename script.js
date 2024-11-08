@@ -24,8 +24,9 @@ $(document).ready(function() {
 
             if (scoreMatch) {
                 lastScore = parseInt(scoreMatch[1]);
-                console.log("White Position Score:", lastScore);
-                $('#white-position-score').text(`White Position Score: ${lastScore}`);
+		declastScore = lastScore * -.01;
+                console.log("Black Position Score:", declastScore);
+                $('#white-position-score').text(`Black Position Score: ${declastScore}`);
             }
 
             if (moveSuggestionMatch) {
