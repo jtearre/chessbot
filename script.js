@@ -18,7 +18,7 @@ $(document).ready(function() {
         const message = event.data;
         console.log("Stockfish response:", message);
 
-        // Only handle best move and capture the last score when White moves
+        // Handle best move to trigger Stockfish move for Black and display score
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
@@ -29,11 +29,10 @@ $(document).ready(function() {
                 }
             }
             
-            // Show White's position score if lastScore was recorded
+            // Display Black perspective score if lastScore was recorded
             if (lastScore !== null) {
-                console.log("Final White Position Score:", lastScore);
-                $('#white-position-score').text(`White Position Score: ${lastScore}`);
-                lastScore = null;  // Reset lastScore for the next White move
+                displayPositionScore(lastScore);  // Display score transformed to Black's perspective
+                lastScore = null;  // Reset for next turn
             }
         }
 
@@ -102,6 +101,22 @@ $(document).ready(function() {
         currentMoveIndex = moveHistory.length - 1;
     }
 
+    // Display the score from Black's perspective
+    function displayPositionScore(score) {
+        // Transform score to Black's perspective
+        const blackScore = score * -0.1;
+
+        let interpretedScore;
+        if (blackScore >= 3) interpretedScore = "Black is in a very strong position";
+        else if (blackScore >= 1) interpretedScore = "Black has a moderate advantage";
+        else if (blackScore > -1) interpretedScore = "The position is balanced";
+        else if (blackScore > -3) interpretedScore = "White has a moderate advantage";
+        else interpretedScore = "White is in a very strong position";
+
+        console.log(`Transformed Score (Black's perspective): ${blackScore} (Interpreted: ${interpretedScore})`);
+        $('#white-position-score').text(`Black Position Score: ${blackScore.toFixed(1)} (${interpretedScore})`);
+    }
+
     $('#back-button').on('click', function() {
         if (currentMoveIndex > 0) {
             currentMoveIndex--;
@@ -126,7 +141,7 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
-        $('#white-position-score').text('White Position Score: 0');
+        $('#white-position-score').text('Black Position Score: 0');
         clearHighlights();
         selectedSquare = null;
     });
