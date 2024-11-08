@@ -176,4 +176,12 @@ $(document).ready(function() {
     }
 
     function clearHighlights(type) {
-        if (type === 'selected')
+        if (type === 'selected') {
+            $('.square-55d63').removeClass('highlighted-selected');
+        } else if (type === 'target') {
+            $('.square-55d63').removeClass('highlighted-target');
+        } else {
+            $('.square-55d63').removeClass('highlighted-selected highlighted-target');
+        }
+    }
+});
