@@ -17,16 +17,24 @@ $(document).ready(function() {
         const message = event.data;
         console.log("Stockfish response:", message);
 
-        // Only handle Stockfish's final 'bestmove' response for Black's turn
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
-                console.log("Stockfish (Black) moves:", bestMove);
                 const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
                 if (move !== null) {
                     addMoveToHistory();
                     board.position(game.fen());
                 }
+            }
+        }
+
+        // Display raw White position score after White moves
+        if (message.includes("score cp") && game.turn() === 'w') {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            if (scoreMatch) {
+                const currentScore = parseInt(scoreMatch[1]);
+                console.log("White Position Score:", currentScore);
+                $('#white-position-score').text(`White Position Score: ${currentScore}`);
             }
         }
     };
@@ -55,8 +63,8 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
+                // Trigger Stockfish only for Black’s turn after White's move
                 if (game.turn() === 'b') {
-                    console.log("White moved, now Stockfish (Black) will move.");
                     stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage("go depth 10");
                 }
@@ -111,6 +119,7 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
+        $('#white-position-score').text('White Position Score: 0');
         clearHighlights();
         selectedSquare = null;
     });
