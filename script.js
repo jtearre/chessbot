@@ -11,6 +11,7 @@ $(document).ready(function() {
     let selectedSquare = null; // Store the currently selected square for moving
     let moveHistory = []; // Array to store the history of moves
     let currentMoveIndex = 0; // Tracks current position in history
+    let skillLevel = 0; // Default skill level for Stockfish (easy)
 
     stockfish.onmessage = function(event) {
         const message = event.data;
@@ -39,6 +40,15 @@ $(document).ready(function() {
     };
 
     stockfish.postMessage("uci");
+
+    // Update Stockfish skill level based on dropdown selection
+    $('#difficulty').on('change', function() {
+        skillLevel = parseInt($(this).val());
+        stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
+    });
+
+    // Initialize the skill level at startup
+    stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
 
     // Click-to-move with persistent highlighting
     $('#chess-board').on('click', '.square-55d63', function() {
