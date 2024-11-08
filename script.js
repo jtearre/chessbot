@@ -28,11 +28,12 @@ $(document).ready(function() {
                     board.position(game.fen());
                 }
             }
-            
-            // Display Black perspective score if lastScore was recorded
+
+            // Display the transformed score (Black perspective)
             if (lastScore !== null) {
-                displayPositionScore(lastScore);  // Display score transformed to Black's perspective
-                lastScore = null;  // Reset for next turn
+                const blackPerspectiveScore = lastScore * -0.1;
+                $('#white-position-score').text(`Position Score (Black perspective): ${blackPerspectiveScore.toFixed(1)}`);
+                lastScore = null;  // Reset for the next White move
             }
         }
 
@@ -101,22 +102,6 @@ $(document).ready(function() {
         currentMoveIndex = moveHistory.length - 1;
     }
 
-    // Display the score from Black's perspective
-    function displayPositionScore(score) {
-        // Transform score to Black's perspective
-        const blackScore = score * -0.1;
-
-        let interpretedScore;
-        if (blackScore >= 3) interpretedScore = "Black is in a very strong position";
-        else if (blackScore >= 1) interpretedScore = "Black has a moderate advantage";
-        else if (blackScore > -1) interpretedScore = "The position is balanced";
-        else if (blackScore > -3) interpretedScore = "White has a moderate advantage";
-        else interpretedScore = "White is in a very strong position";
-
-        console.log(`Transformed Score (Black's perspective): ${blackScore} (Interpreted: ${interpretedScore})`);
-        $('#white-position-score').text(`Black Position Score: ${blackScore.toFixed(1)} (${interpretedScore})`);
-    }
-
     $('#back-button').on('click', function() {
         if (currentMoveIndex > 0) {
             currentMoveIndex--;
@@ -141,7 +126,7 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
-        $('#white-position-score').text('Black Position Score: 0');
+        $('#white-position-score').text('Position Score (Black perspective): 0');
         clearHighlights();
         selectedSquare = null;
     });
