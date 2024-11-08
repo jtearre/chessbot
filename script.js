@@ -35,6 +35,7 @@ $(document).ready(function() {
         if (message.includes("score cp")) {
             
 		console.log("SCORE FOUND!");
+		console.log(" -1 ");
 
 		const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
