@@ -30,7 +30,7 @@ $(document).ready(function() {
                     provideMoveFeedback(scoreDiff);
                 }
 
-                // Update position feedback based on the current score
+                // Provide position feedback based on the current score
                 provideFeedback(currentScore);
                 lastScore = currentScore; // Update last score
             }
@@ -44,6 +44,10 @@ $(document).ready(function() {
                 if (move !== null) {
                     addMoveToHistory();
                     board.position(game.fen());
+
+                    // Request new position feedback after Stockfish moves
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage("go depth 10");
                 }
             }
         }
@@ -72,6 +76,8 @@ $(document).ready(function() {
                 highlightSquare(square, 'target');
                 selectedSquare = null;
                 addMoveToHistory();
+
+                // Provide feedback for the player’s move
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
             } else if (piece && piece.color === game.turn()) {
