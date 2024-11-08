@@ -12,13 +12,13 @@ $(document).ready(function() {
     let moveHistory = [];
     let currentMoveIndex = 0;
     let skillLevel = 0;
-    let lastScore = null;
+    let lastScore = null; // Track the last position score
 
     stockfish.onmessage = function(event) {
         const message = event.data;
         console.log("Stockfish response:", message);
 
-        // Detect best move and move for Black
+        // Only handle best move and capture the last score when White moves
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
@@ -28,21 +28,20 @@ $(document).ready(function() {
                     board.position(game.fen());
                 }
             }
-
-            // Display White's position score if lastScore was recorded
+            
+            // Show White's position score if lastScore was recorded
             if (lastScore !== null) {
+                console.log("Final White Position Score:", lastScore);
                 $('#white-position-score').text(`White Position Score: ${lastScore}`);
-                console.log(`White Position Score: ${lastScore}`);
-                lastScore = null;  // Reset for the next White move
+                lastScore = null;  // Reset lastScore for the next White move
             }
         }
 
-        // Capture score from Stockfish's evaluation for White's position
+        // Capture the score from the last evaluation before the best move
         if (message.includes("score cp") && game.turn() === 'w') {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 lastScore = parseInt(scoreMatch[1]);
-                console.log("Captured Score:", lastScore); // Log captured score
             }
         }
     };
