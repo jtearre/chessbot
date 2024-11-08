@@ -13,18 +13,16 @@ $(document).ready(function() {
     let currentMoveIndex = 0;
     let skillLevel = 0;
     let lastWhiteScore = null;
-    let isEvaluating = false; // Track if Stockfish is currently evaluating
 
     stockfish.onmessage = function(event) {
         const message = event.data;
 
-        console.log("Stockfish response:", message);  // Log every Stockfish response for tracking
+        // Log Stockfish messages for debugging
+        console.log("Stockfish response:", message);
 
-        // Handle only final 'bestmove' response to make Stockfish move on Black's turn
+        // Make Stockfish move on Black's turn only when bestmove is received
         if (message.startsWith("bestmove")) {
-            isEvaluating = false;  // Reset evaluation flag
             const bestMove = message.split(" ")[1];
-
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
                 console.log("Stockfish (Black) moves:", bestMove);
                 const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
@@ -35,8 +33,8 @@ $(document).ready(function() {
             }
         }
 
-        // Only process feedback for White's turn and final evaluation
-        if (message.includes("score cp") && game.turn() === 'w' && isEvaluating) {
+        // Process feedback only for White's turn and final evaluation
+        if (message.includes("score cp") && game.turn() === 'w') {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 let currentScore = parseInt(scoreMatch[1]);
@@ -84,7 +82,6 @@ $(document).ready(function() {
                 // Trigger Stockfish only for Black’s turn after White's move
                 if (game.turn() === 'b') {
                     console.log("White moved, now Stockfish (Black) will move.");
-                    isEvaluating = true;  // Set flag to indicate Stockfish should evaluate
                     stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage("go depth 10");
                 }
@@ -172,7 +169,6 @@ $(document).ready(function() {
         clearHighlights();
         selectedSquare = null;
         lastWhiteScore = null;
-        isEvaluating = false;
     });
 
     function highlightSquare(square, type) {
