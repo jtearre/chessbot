@@ -158,16 +158,46 @@ $(document).ready(function() {
     }
 
     // Provide feedback based on Stockfish evaluation
-    function provideFeedback(score) {
-        let feedback;
-        if (score > 300) feedback = "You're in a very strong position!";
-        else if (score > 150) feedback = "You have a clear advantage.";
-        else if (score > 50) feedback = "You have a slight advantage.";
-        else if (score > -50) feedback = "The position is balanced.";
-        else if (score > -150) feedback = "You're at a slight disadvantage.";
-        else if (score > -300) feedback = "You're at a clear disadvantage.";
-        else feedback = "You're in a very weak position!";
+//    function provideFeedback(score) {
+  //      let feedback;
+  //      if (score > 300) feedback = "You're in a very strong position!";
+  //      else if (score > 150) feedback = "You have a clear advantage.";
+  //      else if (score > 50) feedback = "You have a slight advantage.";
+  //      else if (score > -50) feedback = "The position is balanced.";
+  //      else if (score > -150) feedback = "You're at a slight disadvantage.";
+  //      else if (score > -300) feedback = "You're at a clear disadvantage.";
+  //      else feedback = "You're in a very weak position!";
         
-        $('#feedback').text(feedback);
-    }
+  //      $('#feedback').text(feedback);
+  //  }
+
+// Function to provide move feedback based on score difference
+function provideMoveFeedback(scoreDiff) {
+    let feedback;
+    if (scoreDiff > 30) feedback = "Good move!";
+    else if (scoreDiff >= -30 && scoreDiff <= 30) feedback = "Fine move.";
+    else feedback = "Bad move!";
+    
+    $('#move-feedback').text(feedback); // Update move-specific feedback
+}
+
+// Provide position feedback based on Stockfish evaluation
+function provideFeedback(score) {
+    let feedback;
+    if (score > 300) feedback = "You're in a very strong position!";
+    else if (score > 150) feedback = "You have a clear advantage.";
+    else if (score > 50) feedback = "You have a slight advantage.";
+    else if (score > -50) feedback = "The position is balanced.";
+    else if (score > -150) feedback = "You're at a slight disadvantage.";
+    else if (score > -300) feedback = "You're at a clear disadvantage.";
+    else feedback = "You're in a very weak position!";
+    
+    $('#position-feedback').text(feedback); // Update position feedback
+}
+
+
+
+
+
+
 });
