@@ -12,7 +12,8 @@ $(document).ready(function() {
     let moveHistory = [];
     let currentMoveIndex = 0;
     let skillLevel = 0;
-    let lastScore = null;
+    let lastWhiteScore = null;
+    let lastBlackScore = null;
 
     stockfish.onmessage = function(event) {
         const message = event.data;
@@ -22,18 +23,22 @@ $(document).ready(function() {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 let currentScore = parseInt(scoreMatch[1]);
-                const isWhite = game.turn() === 'w';
-                currentScore = isWhite ? currentScore : -currentScore;
-
-                // Provide move feedback based on score difference
-                if (lastScore !== null) {
-                    const scoreDiff = currentScore - lastScore;
-                    provideMoveFeedback(scoreDiff, isWhite);
+                if (game.turn() === 'b') {
+                    currentScore = -currentScore; // Flip score for Black
+                    providePositionFeedback(currentScore, false); // Update Black's position feedback
+                    if (lastBlackScore !== null) {
+                        const scoreDiff = currentScore - lastBlackScore;
+                        provideMoveFeedback(scoreDiff, false); // Update Black's move feedback
+                    }
+                    lastBlackScore = currentScore;
+                } else {
+                    providePositionFeedback(currentScore, true); // Update White's position feedback
+                    if (lastWhiteScore !== null) {
+                        const scoreDiff = currentScore - lastWhiteScore;
+                        provideMoveFeedback(scoreDiff, true); // Update White's move feedback
+                    }
+                    lastWhiteScore = currentScore;
                 }
-
-                // Provide position feedback based on the current score
-                providePositionFeedback(currentScore, isWhite);
-                lastScore = currentScore;
             }
         }
 
@@ -47,8 +52,8 @@ $(document).ready(function() {
                     board.position(game.fen());
 
                     // Request new position feedback after Stockfish moves
-                    if (game.turn() === 'w') { // Start listening for White's move
-                        lastScore = null; // Reset the last score to provide accurate feedback
+                    if (game.turn() === 'w') {
+                        stockfish.postMessage(`position fen ${game.fen()}`);
                     } else {
                         stockfish.postMessage(`position fen ${game.fen()}`);
                         stockfish.postMessage("go depth 10");
@@ -170,7 +175,8 @@ $(document).ready(function() {
         $('#black-move-feedback').text('');
         clearHighlights();
         selectedSquare = null;
-        lastScore = null;
+        lastWhiteScore = null;
+        lastBlackScore = null;
     });
 
     function highlightSquare(square, type) {
