@@ -23,21 +23,26 @@ $(document).ready(function() {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 let currentScore = parseInt(scoreMatch[1]);
-                if (game.turn() === 'b') {
-                    currentScore = -currentScore; // Flip score for Black
-                    providePositionFeedback(currentScore, false); // Update Black's position feedback
-                    if (lastBlackScore !== null) {
-                        const scoreDiff = currentScore - lastBlackScore;
-                        provideMoveFeedback(scoreDiff, false); // Update Black's move feedback
-                    }
-                    lastBlackScore = currentScore;
-                } else {
-                    providePositionFeedback(currentScore, true); // Update White's position feedback
+                const isWhiteTurn = game.turn() === 'w';
+
+                // Flip score for Black's perspective
+                currentScore = isWhiteTurn ? currentScore : -currentScore;
+
+                // Update position and move feedback based on score difference
+                if (isWhiteTurn) {
                     if (lastWhiteScore !== null) {
                         const scoreDiff = currentScore - lastWhiteScore;
-                        provideMoveFeedback(scoreDiff, true); // Update White's move feedback
+                        provideMoveFeedback(scoreDiff, true); // White move feedback
                     }
+                    providePositionFeedback(currentScore, true); // White position feedback
                     lastWhiteScore = currentScore;
+                } else {
+                    if (lastBlackScore !== null) {
+                        const scoreDiff = currentScore - lastBlackScore;
+                        provideMoveFeedback(scoreDiff, false); // Black move feedback
+                    }
+                    providePositionFeedback(currentScore, false); // Black position feedback
+                    lastBlackScore = currentScore;
                 }
             }
         }
@@ -51,7 +56,7 @@ $(document).ready(function() {
                     addMoveToHistory();
                     board.position(game.fen());
 
-                    // Request new position feedback after Stockfish moves
+                    // Trigger feedback and stockfish move on Black's turn
                     if (game.turn() === 'w') {
                         stockfish.postMessage(`position fen ${game.fen()}`);
                     } else {
@@ -87,7 +92,7 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // After White's move, prompt Stockfish for Black's move
+                // Trigger stockfish move for Black after White's move
                 if (game.turn() === 'b') {
                     stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage("go depth 10");
@@ -127,6 +132,7 @@ $(document).ready(function() {
         else feedback = "Bad move!";
         
         const feedbackId = isWhite ? '#white-move-feedback' : '#black-move-feedback';
+        console.log(`Updating ${isWhite ? "White" : "Black"} move feedback:`, feedback);
         $(feedbackId).text(feedback);
     }
 
@@ -142,6 +148,7 @@ $(document).ready(function() {
         else feedback = "Very weak position!";
         
         const feedbackId = isWhite ? '#white-position-feedback' : '#black-position-feedback';
+        console.log(`Updating ${isWhite ? "White" : "Black"} position feedback:`, feedback);
         $(feedbackId).text(feedback);
     }
 
@@ -169,10 +176,10 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
-        $('#white-position-feedback').text('');
-        $('#white-move-feedback').text('');
-        $('#black-position-feedback').text('');
-        $('#black-move-feedback').text('');
+        $('#white-position-feedback').text('White Position Feedback');
+        $('#white-move-feedback').text('White Move Feedback');
+        $('#black-position-feedback').text('Black Position Feedback');
+        $('#black-move-feedback').text('Black Move Feedback');
         clearHighlights();
         selectedSquare = null;
         lastWhiteScore = null;
@@ -197,4 +204,3 @@ $(document).ready(function() {
         }
     }
 });
-
