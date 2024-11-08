@@ -23,6 +23,16 @@ $(document).ready(function() {
             $('#suggested-move').text(`Suggested move for White: ${bestMoveForWhite}`);
         }
 
+        if (message.includes("score cp")) {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            if (scoreMatch) {
+                lastScore = parseInt(scoreMatch[1]);
+                console.log("White Position Score:", lastScore);
+                $('#white-position-score').text(`White Position Score: ${lastScore}`);
+            }
+        }
+
+
         // Execute Black's move
         if (message.startsWith("bestmove") && game.turn() === 'b') {
             const bestMove = message.split(" ")[1];
