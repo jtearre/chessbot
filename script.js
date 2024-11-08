@@ -1,41 +1,39 @@
 $(document).ready(function() {
     var board = Chessboard('chess-board', {
         position: 'start',
-        draggable: false,  // Disable dragging for click-to-move only
+        draggable: false,
         pieceTheme: 'https://raw.githubusercontent.com/ornicar/lila/master/public/piece/alpha/{piece}.svg'
     });
 
     let game = new Chess();
     const stockfish = new Worker("js/stockfish.js");
 
-    let selectedSquare = null; // Store the currently selected square for moving
-    let moveHistory = []; // Array to store the history of moves
-    let currentMoveIndex = 0; // Tracks current position in history
-    let skillLevel = 0; // Default skill level for Stockfish (easy)
-    let lastScore = null; // Stores the last evaluation score for feedback
+    let selectedSquare = null;
+    let moveHistory = [];
+    let currentMoveIndex = 0;
+    let skillLevel = 0;
+    let lastScore = null;
 
     stockfish.onmessage = function(event) {
         const message = event.data;
 
-        // Parse Stockfish's score to give move-by-move feedback
+        // Parse Stockfish's score for move-by-move feedback
         if (message.includes("score cp")) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 let currentScore = parseInt(scoreMatch[1]);
-                if (game.turn() === 'b') currentScore = -currentScore; // Adjust for White's perspective
+                if (game.turn() === 'b') currentScore = -currentScore;
 
-                // If there's a previous score, provide feedback on the last move
+                // Provide move feedback based on score difference
                 if (lastScore !== null) {
                     const scoreDiff = currentScore - lastScore;
                     provideMoveFeedback(scoreDiff);
                 }
-
-                // Update the last score for the next move
-                lastScore = currentScore;
+                lastScore = currentScore; // Update last score
             }
         }
 
-        // Handle Stockfish move response
+        // Stockfish move response handling
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
@@ -50,16 +48,13 @@ $(document).ready(function() {
 
     stockfish.postMessage("uci");
 
-    // Update Stockfish skill level based on dropdown selection
     $('#difficulty').on('change', function() {
         skillLevel = parseInt($(this).val());
         stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
     });
 
-    // Initialize the skill level at startup
     stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
 
-    // Click-to-move with persistent highlighting
     $('#chess-board').on('click', '.square-55d63', function() {
         const square = $(this).attr('data-square');
         if (!square) return;
@@ -67,47 +62,35 @@ $(document).ready(function() {
         const piece = game.get(square);
 
         if (selectedSquare) {
-            // If a piece is selected, attempt a move
-            const move = game.move({
-                from: selectedSquare,
-                to: square,
-                promotion: 'q'
-            });
-
+            const move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
             if (move !== null) {
-                // Move was valid; update board, apply green highlight to target, reset selection, and save move
                 board.position(game.fen());
                 clearHighlights();
-                highlightSquare(square, 'target'); // Highlight target square green
-                selectedSquare = null; // Reset selected square
-                addMoveToHistory(); // Add the move to history and update index
+                highlightSquare(square, 'target');
+                selectedSquare = null;
+                addMoveToHistory();
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage("go depth 10");
             } else if (piece && piece.color === game.turn()) {
-                // If clicked on another of player's pieces, switch selected piece
                 selectedSquare = square;
                 clearHighlights();
-                highlightSquare(square, 'selected'); // Highlight the new selected square yellow
+                highlightSquare(square, 'selected');
             } else {
-                // Invalid move; keep the original selected piece highlighted
                 clearHighlights('target');
                 highlightSquare(selectedSquare, 'selected');
             }
         } else {
-            // First click to select a piece
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
                 clearHighlights();
-                highlightSquare(square, 'selected'); // Highlight selected square yellow
+                highlightSquare(square, 'selected');
             } else {
-                clearHighlights(); // Clear accidental highlights on invalid click
+                clearHighlights();
             }
         }
     });
 
-    // Add move to history and truncate future moves if branching
     function addMoveToHistory() {
-        // Remove any moves after the current index if we're branching
         if (currentMoveIndex < moveHistory.length - 1) {
             moveHistory = moveHistory.slice(0, currentMoveIndex + 1);
         }
@@ -115,17 +98,16 @@ $(document).ready(function() {
         currentMoveIndex = moveHistory.length - 1;
     }
 
-    // Function to provide move feedback based on score difference
+    // Provide move feedback based on score difference and update #move-feedback element
     function provideMoveFeedback(scoreDiff) {
         let feedback;
         if (scoreDiff > 30) feedback = "Good move!";
         else if (scoreDiff >= -30 && scoreDiff <= 30) feedback = "Fine move.";
         else feedback = "Bad move!";
         
-        $('#move-feedback').text(feedback); // Update move-specific feedback
+        $('#move-feedback').text(feedback); // Update only move feedback
     }
 
-    // Navigate backward through move history
     $('#back-button').on('click', function() {
         if (currentMoveIndex > 0) {
             currentMoveIndex--;
@@ -135,7 +117,6 @@ $(document).ready(function() {
         }
     });
 
-    // Navigate forward through move history
     $('#forward-button').on('click', function() {
         if (currentMoveIndex < moveHistory.length - 1) {
             currentMoveIndex++;
@@ -151,23 +132,21 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
-        $('#position-feedback').text('');
-        $('#move-feedback').text('');
-        clearHighlights();  // Clear all highlights on reset
+        $('#position-feedback').text(''); // Clear position feedback
+        $('#move-feedback').text(''); // Clear move feedback
+        clearHighlights();
         selectedSquare = null;
-        lastScore = null; // Reset last score on reset
+        lastScore = null;
     });
 
-    // Function to highlight selected or target squares
     function highlightSquare(square, type) {
         if (type === 'selected') {
-            $(`[data-square='${square}']`).addClass('highlighted-selected'); // Highlight yellow
+            $(`[data-square='${square}']`).addClass('highlighted-selected');
         } else if (type === 'target') {
-            $(`[data-square='${square}']`).addClass('highlighted-target'); // Highlight green
+            $(`[data-square='${square}']`).addClass('highlighted-target');
         }
     }
 
-    // Function to clear specific or all highlights
     function clearHighlights(type) {
         if (type === 'selected') {
             $('.square-55d63').removeClass('highlighted-selected');
@@ -178,7 +157,7 @@ $(document).ready(function() {
         }
     }
 
-    // Provide general feedback based on Stockfish evaluation
+    // Provide position feedback and update #position-feedback element
     function provideFeedback(score) {
         let feedback;
         if (score > 300) feedback = "You're in a very strong position!";
@@ -189,6 +168,6 @@ $(document).ready(function() {
         else if (score > -300) feedback = "You're at a clear disadvantage.";
         else feedback = "You're in a very weak position!";
         
-        $('#position-feedback').text(feedback); // Update position feedback
+        $('#position-feedback').text(feedback); // Update only position feedback
     }
 });
