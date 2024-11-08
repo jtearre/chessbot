@@ -25,29 +25,30 @@ $(document).ready(function() {
                 let currentScore = parseInt(scoreMatch[1]);
                 const isWhiteTurn = game.turn() === 'w';
 
-                // Flip score for Black's perspective
                 currentScore = isWhiteTurn ? currentScore : -currentScore;
 
-                // Update position and move feedback based on score difference
                 if (isWhiteTurn) {
                     if (lastWhiteScore !== null) {
                         const scoreDiff = currentScore - lastWhiteScore;
+                        console.log("White move feedback:", scoreDiff);
                         provideMoveFeedback(scoreDiff, true); // White move feedback
                     }
+                    console.log("White position feedback:", currentScore);
                     providePositionFeedback(currentScore, true); // White position feedback
                     lastWhiteScore = currentScore;
                 } else {
                     if (lastBlackScore !== null) {
                         const scoreDiff = currentScore - lastBlackScore;
+                        console.log("Black move feedback:", scoreDiff);
                         provideMoveFeedback(scoreDiff, false); // Black move feedback
                     }
+                    console.log("Black position feedback:", currentScore);
                     providePositionFeedback(currentScore, false); // Black position feedback
                     lastBlackScore = currentScore;
                 }
             }
         }
 
-        // Stockfish move response handling
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
@@ -56,7 +57,6 @@ $(document).ready(function() {
                     addMoveToHistory();
                     board.position(game.fen());
 
-                    // Trigger feedback and stockfish move on Black's turn
                     if (game.turn() === 'w') {
                         stockfish.postMessage(`position fen ${game.fen()}`);
                     } else {
@@ -92,7 +92,6 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // Trigger stockfish move for Black after White's move
                 if (game.turn() === 'b') {
                     stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage("go depth 10");
@@ -124,7 +123,6 @@ $(document).ready(function() {
         currentMoveIndex = moveHistory.length - 1;
     }
 
-    // Provide move feedback for White or Black based on score difference
     function provideMoveFeedback(scoreDiff, isWhite) {
         let feedback;
         if (scoreDiff > 30) feedback = "Good move!";
@@ -136,7 +134,6 @@ $(document).ready(function() {
         $(feedbackId).text(feedback);
     }
 
-    // Provide position feedback for White or Black
     function providePositionFeedback(score, isWhite) {
         let feedback;
         if (score > 300) feedback = "Very strong position!";
