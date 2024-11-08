@@ -18,7 +18,7 @@ $(document).ready(function() {
         const message = event.data;
         console.log("Stockfish response:", message);
 
-        // Handle best move to trigger Stockfish move for Black and display score
+        // Handle best move to trigger Stockfish move for Black and display White's score
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
@@ -29,10 +29,9 @@ $(document).ready(function() {
                 }
             }
 
-            // Display the transformed score (Black perspective)
+            // Display White's position score if lastScore was recorded
             if (lastScore !== null) {
-                const blackPerspectiveScore = lastScore * -0.1;
-                $('#white-position-score').text(`Position Score (Black perspective): ${blackPerspectiveScore.toFixed(1)}`);
+                $('#white-position-score').text(`White Position Score: ${lastScore}`);
                 lastScore = null;  // Reset for the next White move
             }
         }
@@ -126,7 +125,7 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
-        $('#white-position-score').text('Position Score (Black perspective): 0');
+        $('#white-position-score').text('White Position Score: 0');
         clearHighlights();
         selectedSquare = null;
     });
