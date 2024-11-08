@@ -47,8 +47,12 @@ $(document).ready(function() {
                     board.position(game.fen());
 
                     // Request new position feedback after Stockfish moves
-                    stockfish.postMessage(`position fen ${game.fen()}`);
-                    stockfish.postMessage("go depth 10");
+                    if (game.turn() === 'w') { // Start listening for White's move
+                        lastScore = null; // Reset the last score to provide accurate feedback
+                    } else {
+                        stockfish.postMessage(`position fen ${game.fen()}`);
+                        stockfish.postMessage("go depth 10");
+                    }
                 }
             }
         }
@@ -78,9 +82,11 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // Provide feedback for the player’s move
-                stockfish.postMessage(`position fen ${game.fen()}`);
-                stockfish.postMessage("go depth 10");
+                // After White's move, prompt Stockfish for Black's move
+                if (game.turn() === 'b') {
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage("go depth 10");
+                }
             } else if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
                 clearHighlights();
