@@ -12,14 +12,13 @@ $(document).ready(function() {
     let moveHistory = [];
     let currentMoveIndex = 0;
     let skillLevel = 0;
+    let lastScore = null;
 
     stockfish.onmessage = function(event) {
         const message = event.data;
-        
-        // Log every Stockfish message for debugging
-        console.log("Received from Stockfish:", message);
+        console.log("Stockfish response:", message);
 
-        // Check for best move to trigger Stockfish move for Black
+        // Detect best move and move for Black
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
@@ -29,18 +28,21 @@ $(document).ready(function() {
                     board.position(game.fen());
                 }
             }
+
+            // Display White's position score if lastScore was recorded
+            if (lastScore !== null) {
+                $('#white-position-score').text(`White Position Score: ${lastScore}`);
+                console.log(`White Position Score: ${lastScore}`);
+                lastScore = null;  // Reset for the next White move
+            }
         }
 
-        // Look for position score after White's move
-        if (message.includes("score")) {
-            console.log("Found Score!");
-		const scoreMatch = message.match(/score cp (-?\d+)/);
+        // Capture score from Stockfish's evaluation for White's position
+        if (message.includes("score cp") && game.turn() === 'w') {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
-                const currentScore = parseInt(scoreMatch[1]);
-                console.log("White Position Score:", currentScore);
-                $('#white-position-score').text(`White Position Score: ${currentScore}`);
-            } else {
-                console.log("No score found in message.");
+                lastScore = parseInt(scoreMatch[1]);
+                console.log("Captured Score:", lastScore); // Log captured score
             }
         }
     };
