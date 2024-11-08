@@ -18,7 +18,7 @@ $(document).ready(function() {
         console.log("Stockfish response:", message);
 
         // Display White's position score and best move suggestion without committing the move
-        if (message.includes("score cp") && game.turn() === 'w') {
+        if (message.includes("score cp") ) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             const moveSuggestionMatch = message.match(/ pv ([a-h][1-8][a-h][1-8])/);
 
