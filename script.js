@@ -17,10 +17,10 @@ $(document).ready(function() {
     stockfish.onmessage = function(event) {
         const message = event.data;
 
-        // Log Stockfish messages for debugging
+        // Log Stockfish responses
         console.log("Stockfish response:", message);
 
-        // Make Stockfish move on Black's turn only when bestmove is received
+        // Check for bestmove response from Stockfish (only for Black)
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
@@ -33,22 +33,22 @@ $(document).ready(function() {
             }
         }
 
-        // Process feedback only for White's turn and final evaluation
-        if (message.includes("score cp") && game.turn() === 'w') {
+        // Temporary Test: Process feedback unconditionally to ensure feedback system is working
+        if (message.includes("score cp")) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 let currentScore = parseInt(scoreMatch[1]);
 
-                // White move feedback
+                // White move feedback (unconditionally for debugging)
                 if (lastWhiteScore !== null) {
                     const scoreDiff = currentScore - lastWhiteScore;
                     console.log("White move feedback:", scoreDiff);
-                    provideMoveFeedback(scoreDiff, true);
+                    provideMoveFeedback(scoreDiff, true);  // Update White move feedback
                 }
 
-                // White position feedback
+                // White position feedback (unconditionally for debugging)
                 console.log("White position feedback:", currentScore);
-                providePositionFeedback(currentScore, true);
+                providePositionFeedback(currentScore, true);  // Update White position feedback
                 lastWhiteScore = currentScore;
             }
         }
