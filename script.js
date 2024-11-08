@@ -31,7 +31,7 @@ $(document).ready(function() {
 
             // Display White's position score if lastScore was recorded
             if (lastScore !== null) {
-                $('#white-position-score').text(`White Position Score: ${lastScore}`);
+                $('#white-position-score').text(`Black Position Score: ${lastScore}`);
                 console.log(`White Position Score: ${lastScore}`);
                 lastScore = null;  // Reset for the next White move
             }
@@ -42,6 +42,7 @@ $(document).ready(function() {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 lastScore = parseInt(scoreMatch[1]);
+		lastScore = lastScore * -0.1;
                 console.log("Captured Score:", lastScore); // Log captured score
             }
         }
