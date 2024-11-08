@@ -13,50 +13,14 @@ $(document).ready(function() {
     let currentMoveIndex = 0;
     let skillLevel = 0;
     let lastWhiteScore = null;
-    let lastBlackScore = null;
 
     stockfish.onmessage = function(event) {
         const message = event.data;
 
-        // Log each Stockfish response and game turn
+        // Log Stockfish response for debugging
         console.log("Stockfish response:", message);
-        console.log("Current game turn:", game.turn());
 
-        // Parse Stockfish's score for move-by-move feedback
-        if (message.includes("score cp")) {
-            const scoreMatch = message.match(/score cp (-?\d+)/);
-            if (scoreMatch) {
-                let currentScore = parseInt(scoreMatch[1]);
-                const isWhiteTurn = game.turn() === 'w';
-
-                console.log("Evaluated isWhiteTurn:", isWhiteTurn);  // Log White turn evaluation
-
-                currentScore = isWhiteTurn ? currentScore : -currentScore;
-
-                if (isWhiteTurn) {
-                    console.log("Processing White feedback");  // Confirm White feedback entry
-
-                    if (lastWhiteScore !== null) {
-                        const scoreDiff = currentScore - lastWhiteScore;
-                        console.log("White move feedback:", scoreDiff);  // Confirm White move feedback
-                        provideMoveFeedback(scoreDiff, true); // White move feedback
-                    }
-                    console.log("White position feedback:", currentScore);  // Confirm White position feedback
-                    providePositionFeedback(currentScore, true); // White position feedback
-                    lastWhiteScore = currentScore;
-                } else {
-                    if (lastBlackScore !== null) {
-                        const scoreDiff = currentScore - lastBlackScore;
-                        console.log("Black move feedback:", scoreDiff);  // Confirm Black move feedback
-                        provideMoveFeedback(scoreDiff, false); // Black move feedback
-                    }
-                    console.log("Black position feedback:", currentScore);  // Confirm Black position feedback
-                    providePositionFeedback(currentScore, false); // Black position feedback
-                    lastBlackScore = currentScore;
-                }
-            }
-        }
-
+        // Parse final Stockfish response only when it provides 'bestmove'
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
@@ -65,13 +29,30 @@ $(document).ready(function() {
                     addMoveToHistory();
                     board.position(game.fen());
 
+                    // Process White feedback after Black's final move
                     if (game.turn() === 'w') {
-                        stockfish.postMessage(`position fen ${game.fen()}`);
-                    } else {
+                        // Send position for White feedback evaluation
                         stockfish.postMessage(`position fen ${game.fen()}`);
                         stockfish.postMessage("go depth 10");
                     }
                 }
+            }
+        }
+
+        // Handle score feedback for White only, from final evaluation
+        if (message.includes("score cp") && game.turn() === 'w') {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            if (scoreMatch) {
+                let currentScore = parseInt(scoreMatch[1]);
+
+                if (lastWhiteScore !== null) {
+                    const scoreDiff = currentScore - lastWhiteScore;
+                    console.log("White move feedback:", scoreDiff);
+                    provideMoveFeedback(scoreDiff, true);  // White move feedback
+                }
+                console.log("White position feedback:", currentScore);
+                providePositionFeedback(currentScore, true);  // White position feedback
+                lastWhiteScore = currentScore;
             }
         }
     };
@@ -100,6 +81,7 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
+                // After White's move, prompt Stockfish for Black's move
                 if (game.turn() === 'b') {
                     stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage("go depth 10");
@@ -131,19 +113,19 @@ $(document).ready(function() {
         currentMoveIndex = moveHistory.length - 1;
     }
 
-    // Provide move feedback for White or Black based on score difference
+    // Provide White's move feedback based on score difference
     function provideMoveFeedback(scoreDiff, isWhite) {
         let feedback;
         if (scoreDiff > 30) feedback = "Good move!";
         else if (scoreDiff >= -30 && scoreDiff <= 30) feedback = "Fine move.";
         else feedback = "Bad move!";
         
-        const feedbackId = isWhite ? '#black-move-feedback' : '#white-move-feedback';
-        console.log(`Updating ${isWhite ? "White" : "Black"} move feedback:`, feedback);
+        const feedbackId = isWhite ? '#white-move-feedback' : '#black-move-feedback';
+        console.log(`Updating White move feedback:`, feedback);
         $(feedbackId).text(feedback);
     }
 
-    // Provide position feedback for White or Black
+    // Provide White's position feedback
     function providePositionFeedback(score, isWhite) {
         let feedback;
         if (score > 300) feedback = "Very strong position!";
@@ -155,7 +137,7 @@ $(document).ready(function() {
         else feedback = "Very weak position!";
         
         const feedbackId = isWhite ? '#white-position-feedback' : '#black-position-feedback';
-        console.log(`Updating ${isWhite ? "White" : "Black"} position feedback:`, feedback);
+        console.log(`Updating White position feedback:`, feedback);
         $(feedbackId).text(feedback);
     }
 
@@ -185,12 +167,9 @@ $(document).ready(function() {
         stockfish.postMessage("position startpos");
         $('#white-position-feedback').text('White Position Feedback');
         $('#white-move-feedback').text('White Move Feedback');
-        $('#black-position-feedback').text('Black Position Feedback');
-        $('#black-move-feedback').text('Black Move Feedback');
         clearHighlights();
         selectedSquare = null;
         lastWhiteScore = null;
-        lastBlackScore = null;
     });
 
     function highlightSquare(square, type) {
