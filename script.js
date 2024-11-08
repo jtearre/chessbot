@@ -18,9 +18,8 @@ $(document).ready(function() {
     stockfish.onmessage = function(event) {
         const message = event.data;
 
-        // Check if Stockfish is sending its final 'bestmove' response
-        if (message.startsWith("bestmove")) {
-            isEvaluating = false;  // Reset evaluation flag for next turn
+        // Only process when Stockfish provides its final 'bestmove' response
+        if (message.startsWith("bestmove") && !isEvaluating) {
             const bestMove = message.split(" ")[1];
 
             if (bestMove && bestMove !== "(none)") {
@@ -29,15 +28,13 @@ $(document).ready(function() {
                     addMoveToHistory();
                     board.position(game.fen());
 
-                    if (game.turn() === 'w') {
-                        stockfish.postMessage(`position fen ${game.fen()}`);
-                        stockfish.postMessage("go depth 10");
-                    }
+                    // Now it's White's turn, so stop Stockfish evaluation
+                    isEvaluating = false;
                 }
             }
         }
 
-        // Only process score feedback if Stockfish is in evaluation mode and it's White's turn
+        // Handle score feedback only for White’s turn and only on the final evaluation
         if (message.includes("score cp") && game.turn() === 'w' && isEvaluating) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
@@ -70,6 +67,7 @@ $(document).ready(function() {
 
         const piece = game.get(square);
 
+        // If a piece is already selected, attempt to make a move
         if (selectedSquare) {
             const move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
             if (move !== null) {
@@ -79,9 +77,9 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // Trigger Stockfish evaluation for Black's move
+                // Now it's Black's turn, so trigger Stockfish evaluation
                 if (game.turn() === 'b') {
-                    isEvaluating = true;  // Set evaluation flag
+                    isEvaluating = true;  // Set evaluation flag for Black's move
                     stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage("go depth 10");
                 }
@@ -94,6 +92,7 @@ $(document).ready(function() {
                 highlightSquare(selectedSquare, 'selected');
             }
         } else {
+            // Select piece for White's move
             if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
                 clearHighlights();
