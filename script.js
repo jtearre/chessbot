@@ -16,7 +16,8 @@ $(document).ready(function() {
     stockfish.onmessage = function(event) {
         const message = event.data;
         console.log("Stockfish response:", message);
-
+	
+	console.log("Take 2");
         // Capture evaluation for White
         if (message.includes("score cp")) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
