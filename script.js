@@ -16,15 +16,33 @@ $(document).ready(function() {
     stockfish.onmessage = function(event) {
         const message = event.data;
         console.log("Stockfish response:", message);
-	
-	console.log("Take 2");
-        // Capture evaluation for White
-        if (message.includes("score cp")) {
+
+        // Display White's position score and best move suggestion without committing the move
+        if (message.includes("score cp") && game.turn() === 'w') {
             const scoreMatch = message.match(/score cp (-?\d+)/);
+            const moveSuggestionMatch = message.match(/ pv ([a-h][1-8][a-h][1-8])/);
+
             if (scoreMatch) {
                 lastScore = parseInt(scoreMatch[1]);
                 console.log("White Position Score:", lastScore);
                 $('#white-position-score').text(`White Position Score: ${lastScore}`);
+            }
+
+            if (moveSuggestionMatch) {
+                const suggestedMove = moveSuggestionMatch[1];
+                $('#suggested-move').text(`Suggested move for White: ${suggestedMove}`);
+            }
+        }
+
+        // Execute Black's move based on Stockfish's best move
+        if (message.startsWith("bestmove") && game.turn() === 'b') {
+            const bestMove = message.split(" ")[1];
+            if (bestMove && bestMove !== "(none)") {
+                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
+                if (move !== null) {
+                    addMoveToHistory();
+                    board.position(game.fen());
+                }
             }
         }
     };
@@ -46,10 +64,13 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // Request Stockfish evaluation for White
+                // Trigger Stockfish analysis after White's move
                 if (game.turn() === 'b') {
                     stockfish.postMessage(`position fen ${game.fen()}`);
-                    stockfish.postMessage("go depth 10"); // Trigger evaluation without moving
+                    stockfish.postMessage("go depth 10");  // Black move
+                } else {
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage("go depth 10");  // White analysis
                 }
             } else if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
@@ -103,6 +124,7 @@ $(document).ready(function() {
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
         $('#white-position-score').text('White Position Score: 0');
+        $('#suggested-move').text('Suggested move for White: None');
         clearHighlights();
         selectedSquare = null;
     });
@@ -125,4 +147,3 @@ $(document).ready(function() {
         }
     }
 });
-
