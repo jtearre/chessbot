@@ -13,25 +13,23 @@ $(document).ready(function() {
     let currentMoveIndex = 0;
     let skillLevel = 0;
     let lastWhiteScore = null;
+    let isEvaluating = false;  // Track if we're waiting for a final evaluation
 
     stockfish.onmessage = function(event) {
         const message = event.data;
 
-        // Log Stockfish response for debugging
-        console.log("Stockfish response:", message);
-
-        // Parse final Stockfish response only when it provides 'bestmove'
+        // Check if Stockfish is sending its final 'bestmove' response
         if (message.startsWith("bestmove")) {
+            isEvaluating = false;  // Reset evaluation flag for next turn
             const bestMove = message.split(" ")[1];
+
             if (bestMove && bestMove !== "(none)") {
                 const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
                 if (move !== null) {
                     addMoveToHistory();
                     board.position(game.fen());
 
-                    // Process White feedback after Black's final move
                     if (game.turn() === 'w') {
-                        // Send position for White feedback evaluation
                         stockfish.postMessage(`position fen ${game.fen()}`);
                         stockfish.postMessage("go depth 10");
                     }
@@ -39,8 +37,8 @@ $(document).ready(function() {
             }
         }
 
-        // Handle score feedback for White only, from final evaluation
-        if (message.includes("score cp") && game.turn() === 'w') {
+        // Only process score feedback if Stockfish is in evaluation mode and it's White's turn
+        if (message.includes("score cp") && game.turn() === 'w' && isEvaluating) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 let currentScore = parseInt(scoreMatch[1]);
@@ -48,10 +46,10 @@ $(document).ready(function() {
                 if (lastWhiteScore !== null) {
                     const scoreDiff = currentScore - lastWhiteScore;
                     console.log("White move feedback:", scoreDiff);
-                    provideMoveFeedback(scoreDiff, true);  // White move feedback
+                    provideMoveFeedback(scoreDiff, true);  // Update White move feedback
                 }
                 console.log("White position feedback:", currentScore);
-                providePositionFeedback(currentScore, true);  // White position feedback
+                providePositionFeedback(currentScore, true);  // Update White position feedback
                 lastWhiteScore = currentScore;
             }
         }
@@ -81,8 +79,9 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // After White's move, prompt Stockfish for Black's move
+                // Trigger Stockfish evaluation for Black's move
                 if (game.turn() === 'b') {
+                    isEvaluating = true;  // Set evaluation flag
                     stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage("go depth 10");
                 }
@@ -170,6 +169,7 @@ $(document).ready(function() {
         clearHighlights();
         selectedSquare = null;
         lastWhiteScore = null;
+        isEvaluating = false;  // Reset evaluation flag
     });
 
     function highlightSquare(square, type) {
