@@ -27,8 +27,9 @@ $(document).ready(function() {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 lastScore = parseInt(scoreMatch[1]);
-                console.log("White Position Score:", lastScore);
-                $('#white-position-score').text(`White Position Score: ${lastScore}`);
+		adjustScore = lastScore * .01;
+                console.log("White Position Score:", adjustScore);
+                $('#white-position-score').text(`White Position Score: ${adjustScore}`);
             }
         }
 
