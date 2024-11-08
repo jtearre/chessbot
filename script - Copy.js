@@ -35,12 +35,14 @@ $(document).ready(function() {
         if (message.includes("score cp")) {
             
 		console.log("SCORE FOUND!");
+		console.log(" -1 ");
 
 		const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 const currentScore = parseInt(scoreMatch[1]);
-                console.log("White Position Score:", currentScore);
-                $('#white-position-score').text(`White Position Score: ${currentScore}`);
+		const negatedScore = currentScore * -0.01;
+                console.log("White Position Score:", negatedScore);
+                $('#white-position-score').text(`White: ${negatedScore}`);
             } else {
                 console.log("No score found in message.");
             }

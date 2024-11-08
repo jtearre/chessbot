@@ -11,52 +11,24 @@ $(document).ready(function() {
     let selectedSquare = null;
     let moveHistory = [];
     let currentMoveIndex = 0;
-    let skillLevel = 0;
+    let lastScore = null;
 
     stockfish.onmessage = function(event) {
         const message = event.data;
-        
-        // Log every Stockfish message for debugging
-        console.log("Received from Stockfish:", message);
+        console.log("Stockfish response:", message);
 
-        // Check for best move to trigger Stockfish move for Black
-        if (message.startsWith("bestmove")) {
-            const bestMove = message.split(" ")[1];
-            if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
-                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
-                if (move !== null) {
-                    addMoveToHistory();
-                    board.position(game.fen());
-                }
-            }
-        }
-
-        // Look for position score after White's move
+        // Capture evaluation for White
         if (message.includes("score cp")) {
-            
-		console.log("SCORE FOUND!");
-		console.log(" -1 ");
-
-		const scoreMatch = message.match(/score cp (-?\d+)/);
+            const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
-                const currentScore = parseInt(scoreMatch[1]);
-		const negatedScore = currentScore * -0.01;
-                console.log("White Position Score:", negatedScore);
-                $('#white-position-score').text(`White: ${negatedScore}`);
-            } else {
-                console.log("No score found in message.");
+                lastScore = parseInt(scoreMatch[1]);
+                console.log("White Position Score:", lastScore);
+                $('#white-position-score').text(`White Position Score: ${lastScore}`);
             }
         }
     };
 
     stockfish.postMessage("uci");
-
-    $('#difficulty').on('change', function() {
-        skillLevel = parseInt($(this).val());
-        stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
-    });
-
-    stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
 
     $('#chess-board').on('click', '.square-55d63', function() {
         const square = $(this).attr('data-square');
@@ -73,10 +45,10 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // Trigger Stockfish only for Black’s turn after White's move
+                // Request Stockfish evaluation for White
                 if (game.turn() === 'b') {
                     stockfish.postMessage(`position fen ${game.fen()}`);
-                    stockfish.postMessage("go depth 10");
+                    stockfish.postMessage("go depth 10"); // Trigger evaluation without moving
                 }
             } else if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
@@ -152,3 +124,4 @@ $(document).ready(function() {
         }
     }
 });
+
