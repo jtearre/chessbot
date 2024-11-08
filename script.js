@@ -39,6 +39,7 @@ $(document).ready(function() {
 		const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 const currentScore = parseInt(scoreMatch[1]);
+		currentScore = currentScore * -0.1;
                 console.log("White Position Score:", currentScore);
                 $('#white-position-score').text(`White Position Score: ${currentScore}`);
             } else {
