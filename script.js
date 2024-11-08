@@ -16,6 +16,16 @@ $(document).ready(function() {
     stockfish.onmessage = function(event) {
         const message = event.data;
 
+        // Handle feedback from Stockfish on move quality
+        if (message.includes("score cp")) {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            if (scoreMatch) {
+                let score = parseInt(scoreMatch[1]);
+                if (game.turn() === 'b') score = -score; // Adjust score for White's perspective
+                provideFeedback(score);
+            }
+        }
+
         // Handle Stockfish move response
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
@@ -147,7 +157,7 @@ $(document).ready(function() {
         }
     }
 
-    // Provide general feedback based on Stockfish evaluation
+    // Provide feedback based on Stockfish evaluation
     function provideFeedback(score) {
         let feedback;
         if (score > 300) feedback = "You're in a very strong position!";
