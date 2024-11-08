@@ -33,7 +33,8 @@ $(document).ready(function() {
 
         // Look for position score after White's move
         if (message.includes("score cp")) {
-            const scoreMatch = message.match(/score cp (-?\d+)/);
+            console.log("Found Score!");
+		const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
                 const currentScore = parseInt(scoreMatch[1]);
                 console.log("White Position Score:", currentScore);
