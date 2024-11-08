@@ -6,8 +6,12 @@ $(document).ready(function() {
     });
 
     let game = new Chess();
-    const stockfish = new Worker("js/stockfish.js");
 
+    // Direct test to verify if feedback updates the DOM
+    console.log("Testing position feedback display");
+    providePositionFeedback(150, true);  // Example score for White's position
+
+    const stockfish = new Worker("js/stockfish.js");
     let selectedSquare = null;
     let moveHistory = [];
     let currentMoveIndex = 0;
@@ -16,11 +20,8 @@ $(document).ready(function() {
 
     stockfish.onmessage = function(event) {
         const message = event.data;
-
-        // Log Stockfish messages for debugging
         console.log("Stockfish response:", message);
 
-        // Only handle Stockfish's final 'bestmove' response for Black's turn
         if (message.startsWith("bestmove")) {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
@@ -33,7 +34,7 @@ $(document).ready(function() {
             }
         }
 
-        // Process only position feedback for White's turn
+        // Position feedback only for White
         if (message.includes("score cp") && game.turn() === 'w') {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
@@ -60,7 +61,6 @@ $(document).ready(function() {
 
         const piece = game.get(square);
 
-        // White's move handling
         if (selectedSquare) {
             const move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
             if (move !== null) {
@@ -70,7 +70,6 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // Trigger Stockfish only for Black’s turn after White's move
                 if (game.turn() === 'b') {
                     console.log("White moved, now Stockfish (Black) will move.");
                     stockfish.postMessage(`position fen ${game.fen()}`);
