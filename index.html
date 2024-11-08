@@ -12,7 +12,13 @@
         .highlighted-target {
             background-color: lightgreen !important; /* Highlight for target square */
         }
-    </style>
+    
+        #feedback {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+</style>
 
 
     <!-- chessboard.js CSS from CDN -->
@@ -24,17 +30,13 @@
     <div id="chess-board" style="width: 400px; height: 400px;"></div>
     <button id="reset-button">Reset Game</button>
 
-<div id="feedback">
-    <div id="position-feedback"></div>
-    <div id="move-feedback"></div>
-</div>
+    <div id="feedback">
+        <div id="position-feedback"></div>
+        <div id="move-feedback"></div>
+    </div>
 
 
 
-<div id="controls">
-    <button id="back-button">←</button>
-    <button id="forward-button">→</button>
-</div>
 
 <div id="controls">
     <button id="back-button">←</button>
