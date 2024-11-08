@@ -11,18 +11,34 @@ $(document).ready(function() {
     let selectedSquare = null;
     let moveHistory = [];
     let currentMoveIndex = 0;
-    let skillLevel = 0;
+    let lastScore = null;
 
     stockfish.onmessage = function(event) {
         const message = event.data;
-        
-        // Log every Stockfish message for debugging
-        console.log("Received from Stockfish:", message);
+        console.log("Stockfish response:", message);
 
-        // Check for best move to trigger Stockfish move for Black
-        if (message.startsWith("bestmove")) {
+        // Display White's position score and best move suggestion without committing the move
+        if (message.includes("score cp") ) {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            const moveSuggestionMatch = message.match(/ pv ([a-h][1-8][a-h][1-8])/);
+
+            if (scoreMatch) {
+                lastScore = parseInt(scoreMatch[1]);
+		declastScore = lastScore * -.01;
+                console.log("White Position Score:", declastScore);
+                $('#white-position-score').text(`White Position Score: ${declastScore}`);
+            }
+
+            if (moveSuggestionMatch) {
+                const suggestedMove = moveSuggestionMatch[1];
+                $('#suggested-move').text(`Suggested move for White: ${suggestedMove}`);
+            }
+        }
+
+        // Execute Black's move based on Stockfish's best move
+        if (message.startsWith("bestmove") && game.turn() === 'b') {
             const bestMove = message.split(" ")[1];
-            if (bestMove && bestMove !== "(none)" && game.turn() === 'b') {
+            if (bestMove && bestMove !== "(none)") {
                 const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
                 if (move !== null) {
                     addMoveToHistory();
@@ -30,33 +46,9 @@ $(document).ready(function() {
                 }
             }
         }
-
-        // Look for position score after White's move
-        if (message.includes("score cp")) {
-            
-		console.log("SCORE FOUND!");
-		console.log(" -1 ");
-
-		const scoreMatch = message.match(/score cp (-?\d+)/);
-            if (scoreMatch) {
-                const currentScore = parseInt(scoreMatch[1]);
-		const negatedScore = currentScore * -0.01;
-                console.log("White Position Score:", negatedScore);
-                $('#white-position-score').text(`White: ${negatedScore}`);
-            } else {
-                console.log("No score found in message.");
-            }
-        }
     };
 
     stockfish.postMessage("uci");
-
-    $('#difficulty').on('change', function() {
-        skillLevel = parseInt($(this).val());
-        stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
-    });
-
-    stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
 
     $('#chess-board').on('click', '.square-55d63', function() {
         const square = $(this).attr('data-square');
@@ -73,10 +65,13 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // Trigger Stockfish only for Black’s turn after White's move
+                // Trigger Stockfish analysis after White's move
                 if (game.turn() === 'b') {
                     stockfish.postMessage(`position fen ${game.fen()}`);
-                    stockfish.postMessage("go depth 10");
+                    stockfish.postMessage("go depth 10");  // Black move
+                } else {
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage("go depth 10");  // White analysis
                 }
             } else if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
@@ -130,6 +125,7 @@ $(document).ready(function() {
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
         $('#white-position-score').text('White Position Score: 0');
+        $('#suggested-move').text('Suggested move for White: None');
         clearHighlights();
         selectedSquare = null;
     });
