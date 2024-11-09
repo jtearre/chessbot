@@ -11,7 +11,10 @@ $(document).ready(function() {
     let selectedSquare = null;
     let moveHistory = [];
     let currentMoveIndex = 0;
+    let whiteSuggestions = [];  // Store White's move suggestions
 
+
+	
     stockfish.onmessage = function(event) {
         const message = event.data;
         console.log("Stockfish response:", message);
