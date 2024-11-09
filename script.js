@@ -11,46 +11,30 @@ $(document).ready(function() {
     let selectedSquare = null;
     let moveHistory = [];
     let currentMoveIndex = 0;
-    let whiteSuggestions = [];  // Store White's move suggestions
 
     stockfish.onmessage = function(event) {
         const message = event.data;
         console.log("Stockfish response:", message);
 
-        // Collect move suggestions for White with scores
-        if (message.includes("score cp") && message.includes(" pv ") && game.turn() === 'w') {
-            const scoreMatch = message.match(/score cp (-?\d+)/);
-            const moveSuggestionMatch = message.match(/ pv ([a-h][1-8][a-h][1-8])/);
+        // Capture and display the best move for White after Black's move
+        if (message.includes(" pv ")) {
+            const bestMoveForWhite = message.split(" pv ")[1].split(" ")[0];
+            console.log("Suggested move for White:", bestMoveForWhite);
+            $('#suggested-move').text(`Suggested move for White: ${bestMoveForWhite}`);
+        }
 
-            if (scoreMatch && moveSuggestionMatch) {
-                const score = parseInt(scoreMatch[1]);
-                const move = moveSuggestionMatch[1];
-                
-                // Store the move and score for sorting
-                whiteSuggestions.push({ move, score });
+        if (message.includes("score cp")) {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            if (scoreMatch) {
+                lastScore = parseInt(scoreMatch[1]);
+		adjustScore = lastScore * .01;
+                console.log("White Position Score:", adjustScore);
+                $('#white-position-score').text(`White Position Score: ${adjustScore}`);
             }
         }
 
-        // After Stockfish finishes evaluating White’s suggestions, display the top 3 moves for White
-        if (message.startsWith("bestmove") && game.turn() === 'w') {
-            // Sort the suggestions in descending order (best score first for White)
-            whiteSuggestions.sort((a, b) => b.score - a.score);
 
-            // Get the top 3 suggestions
-            const topSuggestions = whiteSuggestions.slice(0, 3);
-
-            // Display the top 3 suggested moves
-            const suggestionsText = topSuggestions.map(
-                (suggestion, index) => `Move ${index + 1}: ${suggestion.move} (Score: ${suggestion.score})`
-            ).join("<br>");
-
-            $('#suggested-moves').html(`Top 3 moves for White:<br>${suggestionsText}`);
-
-            // Clear suggestions for the next round
-            whiteSuggestions = [];
-        }
-
-        // Execute Black's move after White moves
+        // Execute Black's move
         if (message.startsWith("bestmove") && game.turn() === 'b') {
             const bestMove = message.split(" ")[1];
             if (bestMove && bestMove !== "(none)") {
@@ -59,24 +43,15 @@ $(document).ready(function() {
                     addMoveToHistory();
                     board.position(game.fen());
 
-                    // Trigger White's analysis right after Black's move
-                    triggerWhiteAnalysis();
+                    // Trigger White's analysis after Black's move is made
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage("go depth 10");  // Analyze for White’s best move without executing it
                 }
             }
         }
     };
 
-    function triggerBlackMove() {
-        // Trigger Stockfish to play as Black after White's move
-        stockfish.postMessage(`position fen ${game.fen()}`);
-        stockfish.postMessage("go depth 10");
-    }
-
-    function triggerWhiteAnalysis() {
-        // Trigger analysis for White’s best moves
-        stockfish.postMessage(`position fen ${game.fen()}`);
-        stockfish.postMessage("go depth 10");  // Analyze for White’s best moves without executing them
-    }
+    stockfish.postMessage("uci");
 
     $('#chess-board').on('click', '.square-55d63', function() {
         const square = $(this).attr('data-square');
@@ -95,7 +70,8 @@ $(document).ready(function() {
 
                 // Trigger Stockfish to play as Black after White's move
                 if (game.turn() === 'b') {
-                    triggerBlackMove();
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage("go depth 10");
                 }
             } else if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
@@ -148,7 +124,7 @@ $(document).ready(function() {
         moveHistory = [game.fen()];
         currentMoveIndex = 0;
         stockfish.postMessage("position startpos");
-        $('#suggested-moves').html('Top 3 moves for White: None');
+        $('#suggested-move').text('Suggested move for White: None');
         clearHighlights();
         selectedSquare = null;
     });
