@@ -16,7 +16,24 @@ $(document).ready(function() {
         const message = event.data;
         console.log("Stockfish response:", message);
 
-        // Capture and display the best move for White after Black's move
+        // Execute Black's move
+        if (message.startsWith("bestmove") && game.turn() === 'b') {
+            const bestMove = message.split(" ")[1];
+            if (bestMove && bestMove !== "(none)") {
+                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
+                if (move !== null) {
+                    addMoveToHistory();
+                    board.position(game.fen());
+
+                    // Trigger White's analysis after Black's move is made
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage("go depth 10");  // Analyze for White’s best move without executing it
+                }
+            }
+        }
+    
+    
+            // Capture and display the best move for White after Black's move
         if (message.includes(" pv ")) {
             const bestMoveForWhite = message.split(" pv ")[1].split(" ")[0];
             console.log("Suggested move for White:", bestMoveForWhite);
@@ -33,22 +50,7 @@ $(document).ready(function() {
             }
         }
 
-
-        // Execute Black's move
-        if (message.startsWith("bestmove") && game.turn() === 'b') {
-            const bestMove = message.split(" ")[1];
-            if (bestMove && bestMove !== "(none)") {
-                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
-                if (move !== null) {
-                    addMoveToHistory();
-                    board.position(game.fen());
-
-                    // Trigger White's analysis after Black's move is made
-                    stockfish.postMessage(`position fen ${game.fen()}`);
-                    stockfish.postMessage("go depth 10");  // Analyze for White’s best move without executing it
-                }
-            }
-        }
+    
     };
 
     stockfish.postMessage("uci");
