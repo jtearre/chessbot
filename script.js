@@ -34,12 +34,46 @@ $(document).ready(function() {
     
     
             // Capture and display the best move for White after Black's move
-        if (message.includes(" pv ")) {
-            const bestMoveForWhite = message.split(" pv ")[1].split(" ")[0];
-            console.log("Suggested move for White:", bestMoveForWhite);
-            $('#suggested-move').text(`Suggested move for White: ${bestMoveForWhite}`);
+//        if (message.includes(" pv ")) {
+//            const bestMoveForWhite = message.split(" pv ")[1].split(" ")[0];
+//            console.log("Suggested move for White:", bestMoveForWhite);
+//            $('#suggested-move').text(`Suggested move for White: ${bestMoveForWhite}`);
+//        }
+
+        // Collect move suggestions for White with scores
+        if (message.includes("score cp") && message.includes(" pv ") && game.turn() === 'w') {
+            const scoreMatch = message.match(/score cp (-?\d+)/);
+            const moveSuggestionMatch = message.match(/ pv ([a-h][1-8][a-h][1-8])/);
+
+            if (scoreMatch && moveSuggestionMatch) {
+                const score = parseInt(scoreMatch[1]);
+                const move = moveSuggestionMatch[1];
+                
+                // Store the move and score for sorting
+                whiteSuggestions.push({ move, score });
+            }
         }
 
+        // After Stockfish finishes evaluating White’s suggestions, display the top 3 moves for White
+        if (message.startsWith("bestmove") && game.turn() === 'w') {
+            // Sort the suggestions in descending order (best score first for White)
+            whiteSuggestions.sort((a, b) => b.score - a.score);
+
+            // Get the top 3 suggestions
+            const topSuggestions = whiteSuggestions.slice(0, 3);
+
+            // Display the top 3 suggested moves
+            const suggestionsText = topSuggestions.map(
+                (suggestion, index) => `Move ${index + 1}: ${suggestion.move} (Score: ${suggestion.score})`
+            ).join("<br>");
+
+            $('#suggested-moves').html(`Top 3 moves for White:<br>${suggestionsText}`);
+
+            // Clear suggestions for the next round
+            whiteSuggestions = [];
+        }
+	    
+	    
         if (message.includes("score cp")) {
             const scoreMatch = message.match(/score cp (-?\d+)/);
             if (scoreMatch) {
