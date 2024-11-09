@@ -31,8 +31,8 @@ $(document).ready(function() {
             }
         }
 
-        // After Stockfish finishes evaluating, find and display the top 3 moves for White
-        if (message.startsWith("bestmove") && game.turn() === 'b') {
+        // After Stockfish finishes evaluating White’s suggestions, display the top 3 moves for White
+        if (message.startsWith("bestmove") && game.turn() === 'w') {
             // Sort the suggestions in descending order (best score first for White)
             whiteSuggestions.sort((a, b) => b.score - a.score);
 
@@ -48,6 +48,21 @@ $(document).ready(function() {
 
             // Clear suggestions for the next round
             whiteSuggestions = [];
+        }
+
+        // Execute Black's move after White moves
+        if (message.startsWith("bestmove") && game.turn() === 'b') {
+            const bestMove = message.split(" ")[1];
+            if (bestMove && bestMove !== "(none)") {
+                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
+                if (move !== null) {
+                    addMoveToHistory();
+                    board.position(game.fen());
+
+                    // Trigger White's analysis right after Black's move
+                    triggerWhiteAnalysis();
+                }
+            }
         }
     };
 
@@ -78,6 +93,7 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
+                // Trigger Stockfish to play as Black after White's move
                 if (game.turn() === 'b') {
                     triggerBlackMove();
                 }
@@ -154,14 +170,4 @@ $(document).ready(function() {
             $('.square-55d63').removeClass('highlighted-selected highlighted-target');
         }
     }
-
-    // Trigger White analysis right after the Black move
-    stockfish.onmessage = function(event) {
-        const message = event.data;
-        console.log("Stockfish response:", message);
-
-        if (message.startsWith("bestmove") && game.turn() === 'w') {
-            triggerWhiteAnalysis();
-        }
-    };
 });
