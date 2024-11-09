@@ -31,7 +31,7 @@ $(document).ready(function() {
             }
         }
 
-        // After Stockfish finishes evaluating, find and display the top 3 moves
+        // After Stockfish finishes evaluating, find and display the top 3 moves for White
         if (message.startsWith("bestmove") && game.turn() === 'b') {
             // Sort the suggestions in descending order (best score first for White)
             whiteSuggestions.sort((a, b) => b.score - a.score);
@@ -46,28 +46,22 @@ $(document).ready(function() {
 
             $('#suggested-moves').html(`Top 3 moves for White:<br>${suggestionsText}`);
 
-            // Clear suggestions for next move
+            // Clear suggestions for the next round
             whiteSuggestions = [];
-        }
-
-        // Execute Black's move
-        if (message.startsWith("bestmove") && game.turn() === 'b') {
-            const bestMove = message.split(" ")[1];
-            if (bestMove && bestMove !== "(none)") {
-                const move = game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4) });
-                if (move !== null) {
-                    addMoveToHistory();
-                    board.position(game.fen());
-
-                    // Trigger White's analysis after Black's move is made
-                    stockfish.postMessage(`position fen ${game.fen()}`);
-                    stockfish.postMessage("go depth 10");  // Analyze for White’s best moves without executing them
-                }
-            }
         }
     };
 
-    stockfish.postMessage("uci");
+    function triggerBlackMove() {
+        // Trigger Stockfish to play as Black after White's move
+        stockfish.postMessage(`position fen ${game.fen()}`);
+        stockfish.postMessage("go depth 10");
+    }
+
+    function triggerWhiteAnalysis() {
+        // Trigger analysis for White’s best moves
+        stockfish.postMessage(`position fen ${game.fen()}`);
+        stockfish.postMessage("go depth 10");  // Analyze for White’s best moves without executing them
+    }
 
     $('#chess-board').on('click', '.square-55d63', function() {
         const square = $(this).attr('data-square');
@@ -84,10 +78,8 @@ $(document).ready(function() {
                 selectedSquare = null;
                 addMoveToHistory();
 
-                // Trigger Stockfish to play as Black after White's move
                 if (game.turn() === 'b') {
-                    stockfish.postMessage(`position fen ${game.fen()}`);
-                    stockfish.postMessage("go depth 10");
+                    triggerBlackMove();
                 }
             } else if (piece && piece.color === game.turn()) {
                 selectedSquare = square;
@@ -162,4 +154,14 @@ $(document).ready(function() {
             $('.square-55d63').removeClass('highlighted-selected highlighted-target');
         }
     }
+
+    // Trigger White analysis right after the Black move
+    stockfish.onmessage = function(event) {
+        const message = event.data;
+        console.log("Stockfish response:", message);
+
+        if (message.startsWith("bestmove") && game.turn() === 'w') {
+            triggerWhiteAnalysis();
+        }
+    };
 });
