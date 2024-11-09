@@ -42,11 +42,14 @@ $(document).ready(function() {
 
         // Collect move suggestions for White with scores
         if (message.includes("score cp") && message.includes(" pv ") && game.turn() === 'w') {
-            const scoreMatch = message.match(/score cp (-?\d+)/);
+            console.log("Getting Move Sugg");
+		const scoreMatch = message.match(/score cp (-?\d+)/);
             const moveSuggestionMatch = message.match(/ pv ([a-h][1-8][a-h][1-8])/);
 
             if (scoreMatch && moveSuggestionMatch) {
-                const score = parseInt(scoreMatch[1]);
+		  console.log("Storing Sugg");
+		    
+		    const score = parseInt(scoreMatch[1]);
                 const move = moveSuggestionMatch[1];
                 
                 // Store the move and score for sorting
@@ -56,7 +59,10 @@ $(document).ready(function() {
 
         // After Stockfish finishes evaluating White’s suggestions, display the top 3 moves for White
         if (message.startsWith("bestmove") && game.turn() === 'w') {
-            // Sort the suggestions in descending order (best score first for White)
+
+		  console.log("Displaying best 3");
+		
+		// Sort the suggestions in descending order (best score first for White)
             whiteSuggestions.sort((a, b) => b.score - a.score);
 
             // Get the top 3 suggestions
